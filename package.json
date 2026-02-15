@@ -15,6 +15,7 @@
     "format": "prettier --write --experimental-cli src/"
   },
   "dependencies": {
+    "@material/web": "^2.4.1",
     "vue": "^3.5.27"
   },
   "devDependencies": {
