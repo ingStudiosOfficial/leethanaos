@@ -35,7 +35,7 @@ function windowOnEnter(el: Element, done: () => void) {
                 y: 0,
                 scale: 1,
                 opacity: 1,
-                duration: 0.3,
+                duration: 0.2,
                 ease: 'power2.out',
                 onComplete: done,
             }
@@ -73,7 +73,7 @@ function windowOnLeave(el: Element, done: () => void) {
             y: deltaY,
             scale: 0.1,
             opacity: 0,
-            duration: 0.3,
+            duration: 0.2,
             ease: 'power2.in',
             onComplete: () => {
                 gsap.set(el, { clearProps: 'all' });
