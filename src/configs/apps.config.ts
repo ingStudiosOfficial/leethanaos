@@ -20,4 +20,10 @@ export const appRegistry: AppConfig[] = [
         icon: '/icons/about_me_icon.png',
         component: markRaw(defineAsyncComponent(() => import('../components/apps/AboutMeApp.vue'))),
     },
+    {
+        id: 'tech_stack',
+        name: 'Tech Stack',
+        icon: '/icons/tech_stack_icon.png',
+        component: markRaw(defineAsyncComponent(() => import('../components/apps/TechStackApp.vue'))),
+    },
 ];

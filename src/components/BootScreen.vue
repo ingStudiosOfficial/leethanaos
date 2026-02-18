@@ -1,18 +1,28 @@
 <script setup lang="ts">
 import '@material/web/button/filled-button.js';
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 
+interface ComponentProps {
+    skipAnimations?: boolean;
+}
+
+const props = defineProps<ComponentProps>();
 const emit = defineEmits(['start']);
-
 const bootComplete = ref<boolean>(false);
 
 function bootAnimationFinished() {
     bootComplete.value = true;
 }
+
+onMounted(() => {
+    if (props.skipAnimations) {
+        bootComplete.value = true;
+    }
+});
 </script>
 
 <template>
-    <div class="content-wrapper">
+    <div class="content-wrapper" :class="{ 'no-animations': skipAnimations }">
         <h1 class="os-name">LeethanaOS</h1>
         <p class="os-desc" @animationend="bootAnimationFinished()">A portfolio disguised as an operating system</p>
         <md-filled-button class="start-button" :disabled="!bootComplete" @click="emit('start')">Start</md-filled-button>
@@ -96,5 +106,20 @@ function bootAnimationFinished() {
         opacity: 1;
         transform: translateY(10dvh);
     }
+}
+
+.no-animations .os-name,
+.no-animations .os-desc,
+.no-animations .start-button {
+    animation: none !important;
+    opacity: 1 !important;
+}
+
+.no-animations .os-name {
+    transform: translateY(-10dvh);
+}
+
+.no-animations .start-button {
+    transform: translateY(10dvh);
 }
 </style>

@@ -14,6 +14,7 @@ export interface Process {
 
 export const useProcessManager = defineStore('processManager', () => {
     const activeProcesses = ref<Process[]>([]);
+    const focusTier = ref<Process[]>([]);
     const topZIndex = ref<number>(100);
 
     function openApp(appConfig: AppConfig) {
@@ -35,6 +36,7 @@ export const useProcessManager = defineStore('processManager', () => {
         };
 
         activeProcesses.value.push(newProcess);
+        focusTier.value.push(newProcess);
     }
 
     function focusApp(id: string) {
@@ -42,10 +44,10 @@ export const useProcessManager = defineStore('processManager', () => {
         if (!processToFoucs) return;
 
         const index = activeProcesses.value.indexOf(processToFoucs);
-        activeProcesses.value.splice(index, 1);
-        activeProcesses.value.push(processToFoucs);
+        focusTier.value.splice(index, 1);
+        focusTier.value.push(processToFoucs);
 
-        activeProcesses.value.forEach((p, i) => {
+        focusTier.value.forEach((p, i) => {
             p.zIndex = 100 + i;
         });
     }
@@ -62,6 +64,7 @@ export const useProcessManager = defineStore('processManager', () => {
 
     function closeApp(id: string) {
         activeProcesses.value = activeProcesses.value.filter(p => p.id !== id);
+        focusTier.value = focusTier.value.filter(p => p.id !== id);
     }
 
     return { activeProcesses, openApp, focusApp, minimizeApp, toggleFullscreenApp, closeApp };

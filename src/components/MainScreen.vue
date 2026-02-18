@@ -6,6 +6,8 @@ import WindowShell from './WindowShell.vue';
 import { appRegistry } from '@/configs/apps.config';
 import gsap from 'gsap';
 
+const emit = defineEmits(['lock', 'sleep', 'shutdown', 'restart']);
+
 const processManagerStore = useProcessManager();
 
 function getIcon(appId: string) {
@@ -98,7 +100,7 @@ function windowOnLeave(el: Element, done: () => void) {
 <template>
     <div class="desktop-grid">
         <DesktopSurface class="desktop-surface"></DesktopSurface>
-        <TaskBar class="taskbar"></TaskBar>
+        <TaskBar class="taskbar" @lock="emit('lock')" @sleep="emit('sleep')" @shutdown="emit('shutdown')" @restart="emit('restart')"></TaskBar>
         <div v-for="process in processManagerStore.activeProcesses" :key="process.id">
             <Transition :css="false" @enter="windowOnEnter" @leave="windowOnLeave">
                 <WindowShell v-if="!process.minimized" :style="{ zIndex: process.zIndex }" :name="process.name" :icon="getIcon(process.appId)" :fullscreen="process.fullscreen" :id="`window-${process.id}`" @mousedown="processManagerStore.focusApp(process.id)" @minimize="processManagerStore.minimizeApp(process.id)" @fullscreen="processManagerStore.toggleFullscreenApp(process.id)" @close="processManagerStore.closeApp(process.id)">
