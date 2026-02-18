@@ -1,0 +1,22 @@
+{
+    "Web": [
+        "HTML",
+        "CSS",
+        "JavaScript",
+        "TypeScript",
+        "Vue.js",
+        "Vite",
+        "Chrome Extensions"
+    ],
+    "Backend": [
+        "Node.js",
+        "Express.js",
+        "MongoDB"
+    ],
+    "Others": [
+        "Go",
+        "Python",
+        "Java",
+        "Lua"
+    ]
+}

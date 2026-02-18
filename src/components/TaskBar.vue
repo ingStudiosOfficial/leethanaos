@@ -5,6 +5,7 @@ import '@material/web/menu/menu.js';
 import '@material/web/menu/menu-item.js';
 import { appRegistry } from '@/configs/apps.config';
 import { useProcessManager, type Process } from '@/stores/process_manager';
+import { onMounted, onUnmounted } from 'vue';
 
 interface MdMenu extends HTMLElement {
     open: boolean;
@@ -25,6 +26,21 @@ function toggleStartMenu() {
     const startMenu: MdMenu = document.getElementById('start-menu') as MdMenu;
     startMenu.open = !startMenu.open;
 }
+
+function listenForStartMenuPress(event: KeyboardEvent) {
+    if (event.metaKey && event.altKey) {
+        event.preventDefault();
+        toggleStartMenu();
+    }
+}
+
+onMounted(() => {
+    document.addEventListener('keydown', listenForStartMenuPress);
+});
+
+onUnmounted(() => {
+    document.removeEventListener('keydown', listenForStartMenuPress);
+});
 </script>
 
 <template>

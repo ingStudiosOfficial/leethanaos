@@ -3,18 +3,14 @@ import '@material/web/ripple/ripple.js';
 import '@material/web/focus/md-focus-ring.js';
 import { appRegistry } from '@/configs/apps.config';
 import { useProcessManager } from '@/stores/process_manager';
+import MarqueeSelection from './MarqueeSelection.vue';
 
 const processManagerStore = useProcessManager();
 </script>
 
 <template>
     <div class="content-wrapper">
-        <button 
-            v-for="app in appRegistry" 
-            :key="app.id" 
-            class="desktop-item" 
-            @click="processManagerStore.openApp(app)"
-        >
+        <button v-for="app in appRegistry" :key="app.id" class="desktop-item" @click="processManagerStore.openApp(app)">
             <md-ripple></md-ripple>
             <md-focus-ring style="--md-focus-ring-shape: 25px"></md-focus-ring>
             
@@ -24,6 +20,7 @@ const processManagerStore = useProcessManager();
             
             <p class="app-name">{{ app.name }}</p>
         </button>
+        <MarqueeSelection></MarqueeSelection>
     </div>
 </template>
 
@@ -55,6 +52,7 @@ const processManagerStore = useProcessManager();
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    z-index: 10;
 }
 
 .app-icon-wrapper {

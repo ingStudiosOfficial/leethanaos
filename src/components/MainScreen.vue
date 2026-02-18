@@ -118,6 +118,10 @@ function windowOnLeave(el: Element, done: () => void) {
     box-sizing: border-box;
     height: 100dvh;
     width: 100dvw;
+    background-image: url('/default_wallpaper.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
 }
 
 .desktop-surface {
