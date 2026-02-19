@@ -103,7 +103,7 @@ function windowOnLeave(el: Element, done: () => void) {
         <TaskBar class="taskbar" @lock="emit('lock')" @sleep="emit('sleep')" @shutdown="emit('shutdown')" @restart="emit('restart')"></TaskBar>
         <div v-for="process in processManagerStore.activeProcesses" :key="process.id">
             <Transition :css="false" @enter="windowOnEnter" @leave="windowOnLeave">
-                <WindowShell v-if="!process.minimized" :style="{ zIndex: process.zIndex }" :name="process.name" :icon="getIcon(process.appId)" :fullscreen="process.fullscreen" :id="`window-${process.id}`" @mousedown="processManagerStore.focusApp(process.id)" @minimize="processManagerStore.minimizeApp(process.id)" @fullscreen="processManagerStore.toggleFullscreenApp(process.id)" @close="processManagerStore.closeApp(process.id)">
+                <WindowShell v-show="!process.minimized" :style="{ zIndex: process.zIndex }" :name="process.name" :icon="getIcon(process.appId)" :fullscreen="process.fullscreen" :id="`window-${process.id}`" @mousedown="processManagerStore.focusApp(process.id)" @minimize="processManagerStore.minimizeApp(process.id)" @fullscreen="processManagerStore.toggleFullscreenApp(process.id)" @close="processManagerStore.closeApp(process.id)">
                     <component :is="process.component"></component>
                 </WindowShell>
             </Transition>

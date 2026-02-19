@@ -1,17 +1,47 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { parseCommand } from '@/utils/terminal_utils';
+import { onMounted, reactive, ref } from 'vue';
+
+interface TerminalHistory {
+    command: string;
+    output: string;
+    directory: string;
+    key: string;
+}
 
 const currentDir = ref<string>('~');
 const commandText = ref<string>('');
 const inputRef = ref<HTMLInputElement | null>(null);
 const inputFocused = ref<boolean>(true);
+const currentOutput = ref<string>('');
+const history = reactive<TerminalHistory[]>([]);
 
 function focusInput() {
     inputRef.value?.focus();
 }
 
+function onCommandSend(event: KeyboardEvent) {
+    if (event.key === 'Enter' && inputFocused) {
+        const commandSplit = commandText.value.split(' ');
+        const command = commandSplit.slice(0, 1)[0];
+        const params = commandSplit.slice(1);
+
+        if (!command) {
+            currentOutput.value = 'No command found';
+            return;
+        }
+
+        const response = parseCommand(command, params);
+
+        history.push({ command: commandText.value, output: response, directory: currentDir.value, key: window.crypto.randomUUID() });
+        commandText.value = '';
+        currentOutput.value = '';
+    }
+}
+
 onMounted(() => {
     focusInput();
+    document.addEventListener('keydown', onCommandSend);
 });
 </script>
 
@@ -19,12 +49,22 @@ onMounted(() => {
     <div class="app-wrapper" @click="focusInput">
         <p>leethanaOS [Version 1.0.0]</p>
         <p>© 2026 (ing) Studios</p>
+        <div v-for="item in history" :key="item.key" class="history">
+            <div class="command-line">
+                <span class="prompt">
+                    <span class="user-text">leethana@web</span>: <span class="current-dir">{{ currentDir }}</span> >
+                </span>
+                <div class="input-area">
+                    <span class="display-text">{{ item.command }}</span>
+                </div>
+            </div>
+            <p>{{ item.output }}</p>
+        </div>
         <div class="command-row">
             <div class="command-line">
                 <span class="prompt">
                     <span class="user-text">leethana@web</span>: <span class="current-dir">{{ currentDir }}</span> >
                 </span>
-                
                 <div class="input-area">
                     <span class="display-text">{{ commandText }}</span>
                     <span v-show="inputFocused" class="cursor"></span>
@@ -32,6 +72,7 @@ onMounted(() => {
                     <input ref="inputRef" v-model="commandText" class="hidden-input" autofocus spellcheck="false" autocomplete="off" @focus="inputFocused = true" @blur="inputFocused = false" />
                 </div>
             </div>
+            <p>{{ currentOutput }}</p>
         </div>
     </div>
 </template>
