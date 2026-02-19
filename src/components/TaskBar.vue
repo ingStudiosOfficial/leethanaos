@@ -61,7 +61,7 @@ onUnmounted(() => {
                     <md-icon slot="start">bedtime</md-icon>
                 </md-menu-item>
                 <md-menu-item @click="emit('shutdown')">
-                    <div slot="headline">Shutdown</div>
+                    <div slot="headline">Shut down</div>
                     <md-icon slot="start">power_settings_new</md-icon>
                 </md-menu-item>
                 <md-menu-item @click="emit('restart')">

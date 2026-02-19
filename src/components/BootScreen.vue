@@ -23,7 +23,7 @@ onMounted(() => {
 
 <template>
     <div class="content-wrapper" :class="{ 'no-animations': skipAnimations }">
-        <h1 class="os-name">LeethanaOS</h1>
+        <h1 class="os-name">leethanaOS</h1>
         <p class="os-desc" @animationend="bootAnimationFinished()">A portfolio disguised as an operating system</p>
         <md-filled-button class="start-button" :disabled="!bootComplete" @click="emit('start')">Start</md-filled-button>
     </div>

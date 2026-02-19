@@ -9,16 +9,31 @@ interface ComponentProps {
     fullscreen: boolean;
 }
 
+interface InitMouse {
+    x: number;
+    y: number;
+}
+
+interface InitSize {
+    width: number;
+    height: number;
+}
+
 const props = defineProps<ComponentProps>();
 
 const emit = defineEmits(['close', 'minimize', 'fullscreen']);
 
 const x = ref<number>(100);
 const y = ref<number>(100);
+const width = ref<number>(75);
+const height = ref<number>(75);
 const isDragging = ref<boolean>(false);
 
 let startX = 0;
 let startY = 0;
+
+const initMouse: InitMouse = { x: 0, y: 0 };
+const initSize: InitSize = { width: width.value, height: height.value };
 
 function startDrag(event: MouseEvent) {
     if (props.fullscreen) return;
@@ -45,16 +60,45 @@ function stopDrag() {
     document.removeEventListener('mousemove', onDrag);
     document.removeEventListener('mouseup', stopDrag);
 }
+
+function startResize(event: MouseEvent) {
+    if (props.fullscreen) return;
+
+    initMouse.x = event.clientX;
+    initMouse.y = event.clientY;
+    initSize.width = width.value;
+    initSize.height = height.value;
+
+    document.addEventListener('mousemove', onResize);
+    document.addEventListener('mouseup', stopResize);
+}
+
+function onResize(event: MouseEvent) {
+    const deltaXPixels = event.clientX - initMouse.x;
+    const deltaYPixels = event.clientY - initMouse.y;
+
+    const deltaVW = (deltaXPixels / window.innerWidth) * 100;
+    const deltaVH = (deltaYPixels / window.innerHeight) * 100;
+
+    width.value = initSize.width + deltaVW;
+    height.value = initSize.height + deltaVH;
+}
+
+function stopResize() {
+    document.removeEventListener('mousemove', onResize);
+    document.removeEventListener('mouseup', stopResize);
+}
 </script>
 
 <template>
     <div class="window-shell" :style="{
         left: props.fullscreen ? '0' : `${x}px`,
         top: props.fullscreen ? '0' : `${y}px`,
-        width: props.fullscreen ? '100dvw' : '75dvw',
-        height: props.fullscreen ? '100dvh' : '75dvh',
+        width: props.fullscreen ? '100dvw' : `${width}dvw`,
+        height: props.fullscreen ? '100dvh' : `${height}dvh`,
+        borderRadius: props.fullscreen ? '0' : '25px',
     }">
-        <div class="window-bar" @mousedown="startDrag">
+        <div class="window-bar" @mousedown.prevent.stop="startDrag">
             <div class="bar-left">
                 <img class="window-icon" :src="props.icon" />
                 <p class="window-name">{{ props.name }}</p>
@@ -74,6 +118,7 @@ function stopDrag() {
         <div class="window-content">
             <slot></slot>
         </div>
+        <div class="botright-resize" @mousedown.prevent.stop="startResize"></div>
     </div>
 </template>
 
@@ -82,19 +127,19 @@ function stopDrag() {
     position: fixed;
     width: 75dvw;
     height: 75dvh;
-    display: grid;
-    grid-template-rows: 10% 90%;
+    display: flex;
+    flex-direction: column;
     background-color: var(--md-sys-color-surface);
     border-radius: 25px;
     box-shadow: 0 0 10px var(--md-sys-color-scrim-alpha);
     box-sizing: border-box;
+    overflow: hidden;
 }
 
 .window-bar {
     width: 100%;
-    height: 100%;
+    height: 10dvh;
     background-color: var(--md-sys-color-surface-container);
-    border-radius: 25px 25px 0 0;
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -102,13 +147,16 @@ function stopDrag() {
     padding: 5px;
     box-sizing: border-box;
     cursor: pointer;
+    position: relative;
+    top: 0;
+    left: 0;
+    overflow: scroll;
 }
 
 .window-content {
     width: 100%;
     height: 100%;
     background-color: var(--md-sys-color-surface);
-    border-radius: 0 0 25px 25px;
     box-sizing: border-box;
     overflow: scroll;
 }
@@ -136,5 +184,14 @@ function stopDrag() {
     align-items: center;
     justify-content: flex-end;
     gap: 10px;
+}
+
+.botright-resize {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 20px;
+    height: 20px;
+    cursor: nwse-resize;
 }
 </style>

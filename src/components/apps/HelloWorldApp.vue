@@ -20,6 +20,8 @@
 .app-wrapper {
     box-sizing: border-box;
     padding: 20px;
+    width: 100%;
+    height: 100%;
 }
 
 .app-wrapper * {

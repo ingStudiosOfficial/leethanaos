@@ -26,4 +26,10 @@ export const appRegistry: AppConfig[] = [
         icon: '/icons/tech_stack_icon.png',
         component: markRaw(defineAsyncComponent(() => import('../components/apps/TechStackApp.vue'))),
     },
+    {
+        id: 'terminal',
+        name: 'Terminal',
+        icon: '/icons/terminal_icon.png',
+        component: markRaw(defineAsyncComponent(() => import('../components/apps/TerminalApp.vue'))),
+    },
 ];

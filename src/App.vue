@@ -24,13 +24,23 @@ function sleepDesktop(selectedSleepMode: SleepMode) {
 	sleepMode.value = selectedSleepMode;
 	currentScreen.value = 'sleep';
 }
+
+function restartDesktop() {
+	noBootAnimations.value = false;
+	currentScreen.value = 'boot';
+}
+
+function onSleepWake() {
+	noBootAnimations.value = true;
+	currentScreen.value = 'boot';
+}
 </script>
 
 <template>
 	<main>
 		<BootScreen v-if="currentScreen === 'boot'" :skip-animations="noBootAnimations" @start="startDesktop()"></BootScreen>
 		<MainScreen v-if="currentScreen === 'desktop'" @lock="lockDesktop()" @sleep="sleepDesktop('sleep')" @shutdown="sleepDesktop('shutdown')" @restart="sleepDesktop('restart')"></MainScreen>
-		<SleepScreen v-if="currentScreen === 'sleep'" :sleep-mode="sleepMode"></SleepScreen>
+		<SleepScreen v-if="currentScreen === 'sleep'" :sleep-mode="sleepMode" @restart-complete="restartDesktop()" @sleep-wake="onSleepWake()"></SleepScreen>
 	</main>
 </template>
 
