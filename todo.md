@@ -1,0 +1,1 @@
+1. Make cursor follow actual input

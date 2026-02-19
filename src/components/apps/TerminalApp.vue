@@ -16,6 +16,8 @@ const inputFocused = ref<boolean>(true);
 const currentOutput = ref<string>('');
 const history = reactive<TerminalHistory[]>([]);
 
+let currentCommandIndex = history.length;
+
 function focusInput() {
     inputRef.value?.focus();
 }
@@ -39,9 +41,31 @@ function onCommandSend(event: KeyboardEvent) {
     }
 }
 
+function onArrowKey(event: KeyboardEvent) {
+    if (event.key === 'ArrowUp') {
+        currentCommandIndex = (currentCommandIndex - 1 + history.length) % history.length;
+    } else if (event.key === 'ArrowDown') {
+        currentCommandIndex = (currentCommandIndex + 1) % history.length;
+    }
+
+    console.log(currentCommandIndex);
+    console.log(history.length);
+
+    const commandSelected = history.map(h => h.command)[currentCommandIndex];
+    if (!commandSelected) {
+        commandText.value = '';
+        return;
+    }
+
+    commandText.value = commandSelected;
+}
+
 onMounted(() => {
     focusInput();
-    document.addEventListener('keydown', onCommandSend);
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') onCommandSend(event);
+        else if (event.key === 'ArrowUp' || event.key === 'ArrowDown') onArrowKey(event);
+    });
 });
 </script>
 
@@ -58,7 +82,7 @@ onMounted(() => {
                     <span class="display-text">{{ item.command }}</span>
                 </div>
             </div>
-            <p>{{ item.output }}</p>
+            <p class="output">{{ item.output }}</p>
         </div>
         <div class="command-row">
             <div class="command-line">
@@ -72,7 +96,7 @@ onMounted(() => {
                     <input ref="inputRef" v-model="commandText" class="hidden-input" autofocus spellcheck="false" autocomplete="off" @focus="inputFocused = true" @blur="inputFocused = false" />
                 </div>
             </div>
-            <p>{{ currentOutput }}</p>
+            <p class="output">{{ currentOutput }}</p>
         </div>
     </div>
 </template>
@@ -85,12 +109,12 @@ onMounted(() => {
     background-color: #000000;
     color: #ffffff;
     width: 100%;
-    height: 100%;
+    min-height: 100%;
     font-size: 1rem;
+    position: relative;
 }
 
 .command-line {
-    /* Allows the prompt and input-area to sit side-by-side until they need to wrap */
     display: block; 
     word-break: break-all;
     line-height: 1.5;
@@ -98,12 +122,11 @@ onMounted(() => {
 
 .input-area {
     position: relative;
-    display: inline; /* Changed from inline-flex */
+    display: inline;
     word-break: break-all;
 }
 
 .display-text {
-    /* pre-wrap is essential: it preserves spaces but allows line breaks */
     white-space: pre-wrap; 
     word-break: break-all;
     color: #ffffff;
@@ -114,7 +137,7 @@ onMounted(() => {
     top: 0;
     left: 0;
     width: 100%;
-    height: 100%; /* Now covers the full wrapped area */
+    height: 100%;
     opacity: 0;
     cursor: text;
     border: none;
@@ -129,7 +152,6 @@ onMounted(() => {
     width: 8px;
     height: 1rem;
     background-color: #ffffff;
-    /* Vertical-align ensures it sits on the text baseline while wrapping */
     vertical-align: middle;
     margin-left: 2px;
     animation: blink 1s step-end infinite;
@@ -146,5 +168,9 @@ onMounted(() => {
 
 .current-dir {
     color: var(--md-sys-color-primary);
+}
+
+.output {
+    white-space: pre-line;
 }
 </style>

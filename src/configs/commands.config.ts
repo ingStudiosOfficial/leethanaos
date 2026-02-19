@@ -1,3 +1,4 @@
+import { compgenCommand } from "@/commands/compgen.command";
 import { openUrlCommand } from "@/commands/open_url.command";
 import { testCommand } from "@/commands/test.command";
 
@@ -14,5 +15,9 @@ export const availableCommands: Command[] = [
     {
         name: 'openurl',
         function: openUrlCommand,
+    },
+    {
+        name: 'compgen',
+        function: compgenCommand,
     }
 ];
