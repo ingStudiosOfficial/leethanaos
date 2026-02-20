@@ -7,6 +7,21 @@ async function getLuaInstance(): Promise<LuaEngine> {
     if (!luaInstance) {
         const factory = new LuaFactory();
         luaInstance = await factory.createEngine();
+
+        const lVersion = await getLuaVersion();
+
+        const sysTable: Record<string, unknown> = {
+            version: 'leethanaOS-1.0.0',
+            luaVersion: lVersion,
+        };
+
+        availableCommands.forEach((cmd) => {
+            sysTable[cmd.name] = (...args: unknown[]) => {
+                return cmd.function(args); 
+            };
+        });
+        
+        luaInstance.global.set('sys', sysTable);
     }
 
     return luaInstance;
@@ -25,7 +40,10 @@ export async function parseCommand(command: string, rawInput: string, ...params:
     let outputBuffer = '';
 
     luaInstance.global.set('print', (...args: unknown[]) => {
-        outputBuffer += args.map(arg => String(arg)).join('\t') + '\n';
+        outputBuffer += args.map(arg => {
+            if (typeof arg === 'object') return JSON.stringify(arg);
+            else return String(arg);
+        }).join('\t') + '\n';
     });
 
     try {
@@ -34,19 +52,9 @@ export async function parseCommand(command: string, rawInput: string, ...params:
         if (outputBuffer) return outputBuffer.trim();
         if (result === undefined || result === null) return '';
 
-        console.log(result);
-
-        if (typeof result === 'object') {
-            return JSON.stringify(result, null, 2); 
-        }
-
         return String(result);
     } catch (error) {
         const errorMessage = String(error);
-
-        if (errorMessage.includes('nil') || errorMessage.includes('not found')) {
-            return 'Command not found';
-        }
 
         return errorMessage;
     }

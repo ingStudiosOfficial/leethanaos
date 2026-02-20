@@ -1,1 +1,1 @@
-export type SleepMode = 'sleep' | 'shutdown' | 'restart';
+export type SleepMode = 'sleep' | 'shutdown' | 'reboot';

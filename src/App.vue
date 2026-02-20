@@ -25,7 +25,7 @@ function sleepDesktop(selectedSleepMode: SleepMode) {
 	currentScreen.value = 'sleep';
 }
 
-function restartDesktop() {
+function rebootDesktop() {
 	noBootAnimations.value = false;
 	currentScreen.value = 'boot';
 }
@@ -39,8 +39,8 @@ function onSleepWake() {
 <template>
 	<main>
 		<BootScreen v-if="currentScreen === 'boot'" :skip-animations="noBootAnimations" @start="startDesktop()"></BootScreen>
-		<MainScreen v-if="currentScreen === 'desktop'" @lock="lockDesktop()" @sleep="sleepDesktop('sleep')" @shutdown="sleepDesktop('shutdown')" @restart="sleepDesktop('restart')"></MainScreen>
-		<SleepScreen v-if="currentScreen === 'sleep'" :sleep-mode="sleepMode" @restart-complete="restartDesktop()" @sleep-wake="onSleepWake()"></SleepScreen>
+		<MainScreen v-if="currentScreen === 'desktop'" @lock="lockDesktop()" @sleep="sleepDesktop('sleep')" @shutdown="sleepDesktop('shutdown')" @reboot="sleepDesktop('reboot')"></MainScreen>
+		<SleepScreen v-if="currentScreen === 'sleep'" :sleep-mode="sleepMode" @reboot-complete="rebootDesktop()" @sleep-wake="onSleepWake()"></SleepScreen>
 	</main>
 </template>
 

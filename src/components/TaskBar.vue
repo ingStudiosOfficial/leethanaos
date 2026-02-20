@@ -11,7 +11,7 @@ interface MdMenu extends HTMLElement {
     open: boolean;
 }
 
-const emit = defineEmits(['lock', 'sleep', 'shutdown', 'restart']);
+const emit = defineEmits(['lock', 'sleep', 'shutdown', 'reboot']);
 
 const processManagerStore = useProcessManager();
 
@@ -64,8 +64,8 @@ onUnmounted(() => {
                     <div slot="headline">Shut down</div>
                     <md-icon slot="start">power_settings_new</md-icon>
                 </md-menu-item>
-                <md-menu-item @click="emit('restart')">
-                    <div slot="headline">Restart</div>
+                <md-menu-item @click="emit('reboot')">
+                    <div slot="headline">Reboot</div>
                     <md-icon slot="start">replay</md-icon>
                 </md-menu-item>
             </md-menu>

@@ -9,7 +9,7 @@ interface ComponentProps {
 
 const props = defineProps<ComponentProps>();
 
-const emit = defineEmits(['restartComplete', 'sleepWake']);
+const emit = defineEmits(['rebootComplete', 'sleepWake']);
 
 const sleepMessage = ref<string>(getSleepMessage());
 const displayLoading = ref<boolean>(props.sleepMode === 'sleep' ? false : true);
@@ -20,25 +20,25 @@ function getSleepMessage(): string {
             return 'Sleeping...';
         case 'shutdown':
             return 'Shutting down...';
-        case 'restart':
-            return 'Restarting...';
+        case 'reboot':
+            return 'Rebooting...';
         default:
             return 'Sleeping...';
     }
 }
 
-async function restartDesktop() {
+async function rebootDesktop() {
     await new Promise(resolve => setTimeout(resolve, 2000));
     displayLoading.value = true;
     sleepMessage.value = 'Booting up...';
     await new Promise(resolve => setTimeout(resolve, 2000));
-    emit('restartComplete');
+    emit('rebootComplete');
 }
 
 async function loadBeforeShutdown() {
     await new Promise(resolve => setTimeout(resolve, 2000));
     displayLoading.value = false;
-    if (props.sleepMode === 'restart') restartDesktop();
+    if (props.sleepMode === 'reboot') rebootDesktop();
 }
 
 function onSleepWake() {

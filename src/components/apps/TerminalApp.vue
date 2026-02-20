@@ -38,7 +38,16 @@ async function onCommandSend(event: KeyboardEvent) {
         const params = matches.slice(1);
 
         if (!command) {
-            currentOutput.value = 'No command found';
+            currentOutput.value = 'Command not found';
+            history.push({ 
+                command: commandText.value, 
+                output: currentOutput.value, 
+                directory: currentDir.value, 
+                key: window.crypto.randomUUID() 
+            });
+            
+            commandText.value = '';
+            currentOutput.value = '';
             return;
         }
 
