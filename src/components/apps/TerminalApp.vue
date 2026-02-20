@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { parseCommand } from '@/utils/terminal_utils';
+import { getLuaVersion, parseCommand } from '@/utils/terminal_utils';
 import { onMounted, reactive, ref } from 'vue';
 
 interface TerminalHistory {
@@ -15,6 +15,7 @@ const inputRef = ref<HTMLInputElement | null>(null);
 const inputFocused = ref<boolean>(true);
 const currentOutput = ref<string>('');
 const history = reactive<TerminalHistory[]>([]);
+const luaVersion = ref<string>('');
 
 let currentCommandIndex = history.length;
 
@@ -22,20 +23,34 @@ function focusInput() {
     inputRef.value?.focus();
 }
 
-function onCommandSend(event: KeyboardEvent) {
+async function onCommandSend(event: KeyboardEvent) {
     if (event.key === 'Enter' && inputFocused) {
-        const commandSplit = commandText.value.split(' ');
-        const command = commandSplit.slice(0, 1)[0];
-        const params = commandSplit.slice(1);
+        const regex = /[^\s"']+|"([^"]*)"|'([^']*)'/g;
+        const commandTextValue = commandText.value;
+        const matches = [];
+        let match;
+
+        while ((match = regex.exec(commandTextValue)) !== null) {
+            matches.push(match[1] || match[2] || match[0]);
+        }
+
+        const command = matches[0];
+        const params = matches.slice(1);
 
         if (!command) {
             currentOutput.value = 'No command found';
             return;
         }
 
-        const response = parseCommand(command, params);
+        const response = await parseCommand(command, commandTextValue, params);
 
-        history.push({ command: commandText.value, output: response, directory: currentDir.value, key: window.crypto.randomUUID() });
+        history.push({ 
+            command: commandText.value, 
+            output: response, 
+            directory: currentDir.value, 
+            key: window.crypto.randomUUID() 
+        });
+        
         commandText.value = '';
         currentOutput.value = '';
     }
@@ -60,18 +75,16 @@ function onArrowKey(event: KeyboardEvent) {
     commandText.value = commandSelected;
 }
 
-onMounted(() => {
+onMounted(async () => {
     focusInput();
-    document.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter') onCommandSend(event);
-        else if (event.key === 'ArrowUp' || event.key === 'ArrowDown') onArrowKey(event);
-    });
+    currentCommandIndex = history.length;
+    luaVersion.value = await getLuaVersion();
 });
 </script>
 
 <template>
     <div class="app-wrapper" @click="focusInput">
-        <p>leethanaOS [Version 1.0.0]</p>
+        <p>leethanaOS [Version 1.0.0, {{ luaVersion }}]</p>
         <p>© 2026 (ing) Studios</p>
         <div v-for="item in history" :key="item.key" class="history">
             <div class="command-line">
@@ -93,7 +106,7 @@ onMounted(() => {
                     <span class="display-text">{{ commandText }}</span>
                     <span v-show="inputFocused" class="cursor"></span>
                     
-                    <input ref="inputRef" v-model="commandText" class="hidden-input" autofocus spellcheck="false" autocomplete="off" @focus="inputFocused = true" @blur="inputFocused = false" />
+                    <input ref="inputRef" v-model="commandText" class="hidden-input" autofocus spellcheck="false" autocomplete="off" @focus="inputFocused = true" @blur="inputFocused = false" @keydown.enter="onCommandSend" @keydown.up.prevent="onArrowKey" @keydown.down.prevent="onArrowKey" />
                 </div>
             </div>
             <p class="output">{{ currentOutput }}</p>
