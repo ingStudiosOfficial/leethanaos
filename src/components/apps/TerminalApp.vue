@@ -25,6 +25,8 @@ function focusInput() {
 
 async function onCommandSend(event: KeyboardEvent) {
     if (event.key === 'Enter' && inputFocused) {
+        event.preventDefault();
+
         const regex = /[^\s"']+|"([^"]*)"|'([^']*)'/g;
         const commandTextValue = commandText.value;
         const matches = [];
@@ -95,31 +97,28 @@ onMounted(async () => {
     <div class="app-wrapper" @click="focusInput">
         <p>leethanaOS [Version 1.0.0, {{ luaVersion }}]</p>
         <p>© 2026 (ing) Studios</p>
+        
         <div v-for="item in history" :key="item.key" class="history">
             <div class="command-line">
                 <span class="prompt">
-                    <span class="user-text">leethana@web</span>: <span class="current-dir">{{ currentDir }}</span> >
+                    <span class="user-text">leethana@web</span>: <span class="current-dir">{{ currentDir === '/home' ? '~' : currentDir }}</span> >
                 </span>
-                <div class="input-area">
-                    <span class="display-text">{{ item.command }}</span>
-                </div>
+                <span class="display-text">{{ item.command }}</span>
             </div>
             <p class="output">{{ item.output }}</p>
         </div>
+
         <div class="command-row">
             <div class="command-line">
                 <span class="prompt">
-                    <span class="user-text">leethana@web</span>: <span class="current-dir">{{ currentDir }}</span> >
+                    <span class="user-text">leethana@web</span>: <span class="current-dir">{{ currentDir === '/home' ? '~' : currentDir }}</span> >
                 </span>
-                <div class="input-area">
-                    <span class="display-text">{{ commandText }}</span>
-                    <span v-show="inputFocused" class="cursor"></span>
-                    
-                    <input ref="inputRef" v-model="commandText" class="hidden-input" autofocus spellcheck="false" autocomplete="off" @focus="inputFocused = true" @blur="inputFocused = false" @keydown.enter="onCommandSend" @keydown.up.prevent="onArrowKey" @keydown.down.prevent="onArrowKey" />
-                </div>
+                <span class="display-text">{{ commandText }}<span v-show="inputFocused" class="cursor"></span></span>
             </div>
             <p class="output">{{ currentOutput }}</p>
         </div>
+
+        <textarea ref="inputRef" v-model="commandText" class="hidden-terminal-input" autofocus spellcheck="false" autocomplete="off" @focus="inputFocused = true" @blur="inputFocused = false" @keydown.enter="onCommandSend" @keydown.up.prevent="onArrowKey" @keydown.down.prevent="onArrowKey" />
     </div>
 </template>
 
@@ -140,42 +139,32 @@ onMounted(async () => {
     display: block; 
     word-break: break-all;
     line-height: 1.5;
-}
-
-.input-area {
-    position: relative;
-    display: inline;
-    word-break: break-all;
+    white-space: normal;
 }
 
 .display-text {
     white-space: pre-wrap; 
     word-break: break-all;
     color: #ffffff;
+    display: inline; 
 }
 
-.hidden-input {
-    position: absolute;
-    top: 0;
+.hidden-terminal-input {
+    position: fixed;
+    top: -100px;
     left: 0;
-    width: 100%;
-    height: 100%;
     opacity: 0;
-    cursor: text;
-    border: none;
-    outline: none;
-    z-index: 2;
-    padding: 0;
-    margin: 0;
+    pointer-events: none;
+    z-index: -1;
 }
 
 .cursor {
     display: inline-block;
     width: 8px;
-    height: 1rem;
+    height: 1.2rem;
     background-color: #ffffff;
-    vertical-align: middle;
     margin-left: 2px;
+    vertical-align: text-bottom;
     animation: blink 1s step-end infinite;
 }
 
