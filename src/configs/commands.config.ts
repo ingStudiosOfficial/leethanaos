@@ -5,7 +5,7 @@ import { testCommand } from "@/commands/test.command";
 
 export interface Command {
     name: string;
-    function: (...params: unknown[][]) => string;
+    function: (params: unknown[]) => string;
 }
 
 export const availableCommands: Command[] = [

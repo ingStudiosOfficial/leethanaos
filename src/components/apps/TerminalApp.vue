@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useFileSystem } from '@/stores/file_system';
 import { getLuaVersion, parseCommand } from '@/utils/terminal_utils';
 import { onMounted, reactive, ref } from 'vue';
 
@@ -9,6 +10,8 @@ interface TerminalHistory {
     key: string;
 }
 
+const fileSystemStore = useFileSystem();
+
 const currentDir = ref<string>('~');
 const commandText = ref<string>('');
 const inputRef = ref<HTMLInputElement | null>(null);
@@ -16,6 +19,10 @@ const inputFocused = ref<boolean>(true);
 const currentOutput = ref<string>('');
 const history = reactive<TerminalHistory[]>([]);
 const luaVersion = ref<string>('');
+const activeProcess = ref<{
+    send: (input: string) => void;
+    stop: () => void;
+} | null>(null);
 
 let currentCommandIndex = history.length;
 
@@ -24,15 +31,36 @@ function focusInput() {
 }
 
 async function onCommandSend(event: KeyboardEvent) {
-    if (event.key === 'Enter' && inputFocused) {
+    if (event.key === 'Enter' && !event.shiftKey && inputFocused) {
         event.preventDefault();
+        
+        const input = commandText.value;
+        if (!input && !activeProcess.value) return;
+
+        const historyKey = window.crypto.randomUUID();
+
+        if (activeProcess.value) {
+            const lastHistory = history[history.length - 1];
+            const item = history.find(h => h.key === historyKey);
+            if (lastHistory) {
+                lastHistory.output += `${(item?.output ? '\n' : '')}${input}`;
+            }
+            activeProcess.value.send(input);
+            commandText.value = '';
+            return;
+        }
+
+        history.push({ 
+            command: input, 
+            output: '', 
+            directory: currentDir.value, 
+            key: historyKey 
+        });
 
         const regex = /[^\s"']+|"([^"]*)"|'([^']*)'/g;
-        const commandTextValue = commandText.value;
         const matches = [];
         let match;
-
-        while ((match = regex.exec(commandTextValue)) !== null) {
+        while ((match = regex.exec(input)) !== null) {
             matches.push(match[1] || match[2] || match[0]);
         }
 
@@ -40,30 +68,79 @@ async function onCommandSend(event: KeyboardEvent) {
         const params = matches.slice(1);
 
         if (!command) {
-            currentOutput.value = 'Command not found';
-            history.push({ 
-                command: commandText.value, 
-                output: currentOutput.value, 
-                directory: currentDir.value, 
-                key: window.crypto.randomUUID() 
-            });
-            
+            history[history.length - 1]!.output = 'Command not found';
             commandText.value = '';
-            currentOutput.value = '';
             return;
         }
 
-        const response = await parseCommand(command, commandTextValue, params);
-
-        history.push({ 
-            command: commandText.value, 
-            output: response, 
-            directory: currentDir.value, 
-            key: window.crypto.randomUUID() 
-        });
-        
         commandText.value = '';
-        currentOutput.value = '';
+
+        try {
+            const finalResult = await parseCommand(command, input, params, {
+                onOutput: (text) => {
+                    const item = history.find(h => h.key === historyKey);
+                    if (item) {
+                        item.output += (item.output ? '\n' : '') + text;
+                    }
+                },
+                onProcessStart: (proc) => {
+                    activeProcess.value = proc;
+                },
+                clearHistory: () => {
+                    history.length = 0;
+                },
+                changeDirectory: (dir) => {
+                    let dirToChange = currentDir.value;
+
+                    switch (dir) {
+                        case '.': {
+                            dirToChange = currentDir.value;
+                            break;
+                        }
+
+                        case '..': {
+                            const filePathArray = currentDir.value.split('/');
+                            dirToChange = filePathArray[filePathArray.length - 2] || '/';
+                            break;
+                        }
+
+                        default: {
+                            const filePathArray = currentDir.value.split('/');
+                            filePathArray.push(dir);
+                            dirToChange = filePathArray.join('/');
+                            break;
+                        }
+                    }
+
+                    if (!fileSystemStore.getNode(dirToChange)) {
+                        return 'No such file or directory'
+                    }
+
+                    currentDir.value = dirToChange.replaceAll('//', '/');
+                },
+                listDirectory: (params) => {
+                    const currentNode = fileSystemStore.getNode(currentDir.value);
+                    if (!currentNode) return '';
+                    const childrenArray: string[] = [];
+                    for (const child in currentNode.children) {
+                        childrenArray.push(child);
+                    }
+                    return childrenArray.join('\n');
+                },
+            });
+
+            if (finalResult) {
+                const item = history.find(h => h.key === historyKey);
+                if (item && !item.output.includes(finalResult)) {
+                    item.output += (item.output ? '\n' : '') + finalResult;
+                }
+            }
+        } catch (err) {
+            const item = history.find(h => h.key === historyKey);
+            if (item) item.output += `Error: ${err}`;
+        } finally {
+            activeProcess.value = null;
+        }
     }
 }
 
@@ -101,7 +178,7 @@ onMounted(async () => {
         <div v-for="item in history" :key="item.key" class="history">
             <div class="command-line">
                 <span class="prompt">
-                    <span class="user-text">leethana@web</span>: <span class="current-dir">{{ currentDir === '/home' ? '~' : currentDir }}</span> >
+                    <span class="user-text">leethana@web</span>: <span class="current-dir">{{ item.directory === '/home' ? '~' : item.directory }}</span> >
                 </span>
                 <span class="display-text">{{ item.command }}</span>
             </div>
@@ -110,7 +187,7 @@ onMounted(async () => {
 
         <div class="command-row">
             <div class="command-line">
-                <span class="prompt">
+                <span v-if="!activeProcess" class="prompt">
                     <span class="user-text">leethana@web</span>: <span class="current-dir">{{ currentDir === '/home' ? '~' : currentDir }}</span> >
                 </span>
                 <span class="display-text">{{ commandText }}<span v-show="inputFocused" class="cursor"></span></span>

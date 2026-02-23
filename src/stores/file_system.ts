@@ -19,7 +19,7 @@ export interface FileSystemNode {
     };
 }
 
-export const useFileSystemManager = defineStore('fileSystem', () => {
+export const useFileSystem = defineStore('fileSystem', () => {
     const drive = reactive<Record<string, FileSystemNode>>({
         '/': {
             name: '/',
