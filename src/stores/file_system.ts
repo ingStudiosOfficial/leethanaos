@@ -1,5 +1,6 @@
+import { getDb } from "@/db";
 import { defineStore } from "pinia";
-import { reactive } from "vue";
+import { reactive, ref, toRaw } from "vue";
 
 export type EntryType = 'file' | 'directory' | 'link';
 
@@ -23,13 +24,23 @@ const storageKey = import.meta.env.VITE_FS_STORAGE_KEY;
 
 export const useFileSystem = defineStore('fileSystem', () => {
     const drive = reactive<Record<string, FileSystemNode>>({});
+    const initialized = ref<boolean>(false);
 
-    async function getCachedFileSystem(): Promise<Record<string, FileSystemNode>> {
-        //const db = await getDb();
-        //const cachedFileSystem = await db.getAll('fileSystem', storageKey) as Record<string, FileSystemNode>[];
+    async function persist() {
+        const db = await getDb();
+        await db.put('drive', window.structuredClone(toRaw(drive['/'])), 'root');
+    }
 
-        const defaultFileSystem: Record<string, FileSystemNode> = {
-            '/': {
+    async function init() {
+        if (initialized.value) return;
+
+        const db = await getDb();
+        const savedDrive = await db.get('drive', 'root');
+
+        if (savedDrive) {
+            drive['/'] = savedDrive;
+        } else {
+            drive['/'] = {
                 name: '/',
                 type: 'directory',
                 size: 0,
@@ -59,14 +70,16 @@ export const useFileSystem = defineStore('fileSystem', () => {
                     'usr':   createDir('usr', '/usr'),
                     'var':   createDir('var', '/var'),
                 },
-            },
-        };
+            }
 
-        return defaultFileSystem;
+            await persist();
+        }
+
+        initialized.value = true;
     }
 
     function createDir(name: string, path: string, owner = 'root', size: number = 0, children: Record<string, FileSystemNode> = {}, permissions: string = '755'): FileSystemNode {
-        return {
+        const node: FileSystemNode = {
             name,
             type: 'directory',
             size: size,
@@ -78,10 +91,49 @@ export const useFileSystem = defineStore('fileSystem', () => {
                 createdAt: Date.now(),
                 modifiedAt: Date.now(),
             },
-        }
+        };
+
+        return node;
+    }
+
+    async function createDirPersist(name: string, path: string, owner = 'root', size: number = 0, children: Record<string, FileSystemNode> = {}, permissions: string = '755'): Promise<FileSystemNode> {
+        const node: FileSystemNode = {
+            name,
+            type: 'directory',
+            size: size,
+            location: path,
+            children: children,
+            metadata: {
+                permissions: permissions,
+                owner,
+                createdAt: Date.now(),
+                modifiedAt: Date.now(),
+            },
+        };
+
+        await persist();
+
+        return node;
+    }
+
+    async function makeDir(parentPath: string, name: string) {
+        const parentNode = getNode(parentPath);
+        if (!parentNode) throw new Error('Target does not exist');
+        if (parentNode.type !== 'directory') throw new Error('Target is not a directory');
+
+        if (!parentNode.children) parentNode.children = {};
+
+        const newPath = parentPath === '/' ? `/${name}` : `${parentPath}/${name}`;
+        parentNode.children[name] = createDir(name, newPath, 'leethana');
+
+        parentNode.metadata.modifiedAt = Date.now();
+
+        await persist();
     }
 
     function getNode(path: string): FileSystemNode | null {
+        if (!initialized.value) return null;
+
         const segments = path.split('/').filter(s => s !== '');
 
         let currentNode: FileSystemNode | undefined = drive['/'];
@@ -109,5 +161,5 @@ export const useFileSystem = defineStore('fileSystem', () => {
         return childrenArray.join('\n');
     }
 
-    return { drive, createDir, getNode, listDirectory };
+    return { drive, init, createDir, createDirPersist, makeDir, getNode, listDirectory };
 });

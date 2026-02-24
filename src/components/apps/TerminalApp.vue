@@ -12,7 +12,7 @@ interface TerminalHistory {
 
 const fileSystemStore = useFileSystem();
 
-const currentDir = ref<string>('~');
+const currentDir = ref<string>('/home');
 const commandText = ref<string>('');
 const inputRef = ref<HTMLInputElement | null>(null);
 const inputFocused = ref<boolean>(true);
@@ -116,11 +116,24 @@ async function onCommandSend(event: KeyboardEvent) {
                         return 'No such file or directory'
                     }
 
-                    currentDir.value = dirToChange.replaceAll('//', '/');
+                    currentDir.value = dirToChange.replace(/\/+/g, '/');
                 },
                 listDirectory: (params) => {
                     return fileSystemStore.listDirectory(currentDir.value, params);
                 },
+                makeDirectory: async (params) => {
+                    const dirName = params[0];
+                    if (!dirName || typeof dirName !== 'string') return 'Missing operand';
+
+                    console.log(currentDir.value)
+
+                    try {
+                        await fileSystemStore.makeDir(currentDir.value, dirName);
+                    } catch (error) {
+                        if (error instanceof Error) return `mkdir: ${error.message}`;
+                        else return `mkdir: ${error}`;
+                    }
+                }
             });
 
             if (finalResult) {

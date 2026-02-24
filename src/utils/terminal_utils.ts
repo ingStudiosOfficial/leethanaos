@@ -34,19 +34,27 @@ async function getLuaInstance(): Promise<LuaEngine> {
     return luaInstance;
 }
 
-export async function parseCommand(command: string, rawInput: string, params: unknown[], hooks: { onOutput: (s: string) => void, onProcessStart: OnProcessStartHook, clearHistory: () => void, changeDirectory: (dir: string) => void | string, listDirectory: (params: string[]) => string } ): Promise<string> {
+export async function parseCommand(command: string, rawInput: string, params: unknown[], hooks: { onOutput: (s: string) => void, onProcessStart: OnProcessStartHook, clearHistory: () => void, changeDirectory: (dir: string) => void | string, listDirectory: (params: string[]) => string, makeDirectory: (params: unknown[]) => Promise<void | string> } ): Promise<string> {
     switch (command) {
-        case 'clear':
+        case 'clear': {
             hooks.clearHistory();
             return '';
+        }
 
-        case 'cd':
+        case 'cd': {
             const error = hooks.changeDirectory(params[0] as string);
             return error ? error : '';
+        }
 
-        case 'ls':
+        case 'ls': {
             const dir = hooks.listDirectory(params.map(String));
             return dir;
+        }
+
+        case 'mkdir': {
+            const error = await hooks.makeDirectory(params);
+            return error ? error : '';
+        }
     }
 
     const commandFound = availableCommands.find(c => c.name === command);

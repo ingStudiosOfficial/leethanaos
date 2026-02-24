@@ -4,8 +4,12 @@ import BootScreen from './components/BootScreen.vue';
 import MainScreen from './components/MainScreen.vue';
 import SleepScreen from './components/SleepScreen.vue';
 import type { SleepMode } from './types/SleepMode';
+import { useFileSystem } from './stores/file_system';
 
 type ScreenType = 'boot' | 'desktop' | 'sleep';
+
+const fileSystemStore = useFileSystem();
+fileSystemStore.init();
 
 const currentScreen = ref<ScreenType>('boot');
 const noBootAnimations = ref<boolean>(false);
