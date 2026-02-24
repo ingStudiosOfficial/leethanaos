@@ -119,13 +119,7 @@ async function onCommandSend(event: KeyboardEvent) {
                     currentDir.value = dirToChange.replaceAll('//', '/');
                 },
                 listDirectory: (params) => {
-                    const currentNode = fileSystemStore.getNode(currentDir.value);
-                    if (!currentNode) return '';
-                    const childrenArray: string[] = [];
-                    for (const child in currentNode.children) {
-                        childrenArray.push(child);
-                    }
-                    return childrenArray.join('\n');
+                    return fileSystemStore.listDirectory(currentDir.value, params);
                 },
             });
 

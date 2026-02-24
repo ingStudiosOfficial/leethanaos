@@ -46,6 +46,7 @@ export async function parseCommand(command: string, rawInput: string, params: un
 
         case 'ls':
             const dir = hooks.listDirectory(params.map(String));
+            return dir;
     }
 
     const commandFound = availableCommands.find(c => c.name === command);

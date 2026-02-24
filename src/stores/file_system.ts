@@ -19,40 +19,51 @@ export interface FileSystemNode {
     };
 }
 
+const storageKey = import.meta.env.VITE_FS_STORAGE_KEY;
+
 export const useFileSystem = defineStore('fileSystem', () => {
-    const drive = reactive<Record<string, FileSystemNode>>({
-        '/': {
-            name: '/',
-            type: 'directory',
-            size: 0,
-            location: '/',
-            metadata: {
-                permissions: 'all',
-                owner: 'root',
-                createdAt: Date.now(),
-                modifiedAt: Date.now(),
+    const drive = reactive<Record<string, FileSystemNode>>({});
+
+    async function getCachedFileSystem(): Promise<Record<string, FileSystemNode>> {
+        //const db = await getDb();
+        //const cachedFileSystem = await db.getAll('fileSystem', storageKey) as Record<string, FileSystemNode>[];
+
+        const defaultFileSystem: Record<string, FileSystemNode> = {
+            '/': {
+                name: '/',
+                type: 'directory',
+                size: 0,
+                location: '/',
+                metadata: {
+                    permissions: 'all',
+                    owner: 'root',
+                    createdAt: Date.now(),
+                    modifiedAt: Date.now(),
+                },
+                children: {
+                    'bin':   createDir('bin', '/bin'),
+                    'boot':  createDir('boot', '/boot'),
+                    'dev':   createDir('dev', '/dev'),
+                    'etc':   createDir('etc', '/etc'),
+                    'home':  createDir('home', '/home'),
+                    'lib':   createDir('lib', '/lib'),
+                    'media': createDir('media', '/media'),
+                    'mnt':   createDir('mnt', '/mnt'),
+                    'opt':   createDir('opt', '/opt'),
+                    'proc':  createDir('proc', '/proc'),
+                    'root':  createDir('root', '/root'),
+                    'run':   createDir('run', '/run'),
+                    'sbin':  createDir('sbin', '/sbin'),
+                    'srv':   createDir('srv', '/srv'),
+                    'tmp':   createDir('tmp', '/tmp'), 
+                    'usr':   createDir('usr', '/usr'),
+                    'var':   createDir('var', '/var'),
+                },
             },
-            children: {
-                'bin':   createDir('bin', '/bin'),
-                'boot':  createDir('boot', '/boot'),
-                'dev':   createDir('dev', '/dev'),
-                'etc':   createDir('etc', '/etc'),
-                'home':  createDir('home', '/home'),
-                'lib':   createDir('lib', '/lib'),
-                'media': createDir('media', '/media'),
-                'mnt':   createDir('mnt', '/mnt'),
-                'opt':   createDir('opt', '/opt'),
-                'proc':  createDir('proc', '/proc'),
-                'root':  createDir('root', '/root'),
-                'run':   createDir('run', '/run'),
-                'sbin':  createDir('sbin', '/sbin'),
-                'srv':   createDir('srv', '/srv'),
-                'tmp':   createDir('tmp', '/tmp'), 
-                'usr':   createDir('usr', '/usr'),
-                'var':   createDir('var', '/var'),
-            },
-        },
-    });
+        };
+
+        return defaultFileSystem;
+    }
 
     function createDir(name: string, path: string, owner = 'root', size: number = 0, children: Record<string, FileSystemNode> = {}, permissions: string = '755'): FileSystemNode {
         return {
@@ -88,5 +99,15 @@ export const useFileSystem = defineStore('fileSystem', () => {
         return currentNode;
     }
 
-    return { drive, createDir, getNode };
+    function listDirectory(currentDir: string, params: string[]): string {
+        const currentNode = getNode(currentDir);
+        if (!currentNode) return '';
+        const childrenArray: string[] = [];
+        for (const child in currentNode.children) {
+            childrenArray.push(child);
+        }
+        return childrenArray.join('\n');
+    }
+
+    return { drive, createDir, getNode, listDirectory };
 });
