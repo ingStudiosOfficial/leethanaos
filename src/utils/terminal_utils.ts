@@ -34,7 +34,7 @@ async function getLuaInstance(): Promise<LuaEngine> {
     return luaInstance;
 }
 
-export async function parseCommand(command: string, rawInput: string, params: unknown[], hooks: { onOutput: (s: string) => void, onProcessStart: OnProcessStartHook, clearHistory: () => void, changeDirectory: (dir: string) => void | string, listDirectory: (params: string[]) => string, makeDirectory: (params: unknown[]) => Promise<void | string> } ): Promise<string> {
+export async function parseCommand(command: string, rawInput: string, params: unknown[], hooks: { onOutput: (s: string) => void, onProcessStart: OnProcessStartHook, clearHistory: () => void, changeDirectory: (dir: string) => void | string, listDirectory: (params: string[]) => string, makeDirectory: (params: string[]) => Promise<void | string>, removeDirectory: (params: string[]) => Promise<void | string> } ): Promise<string> {
     switch (command) {
         case 'clear': {
             hooks.clearHistory();
@@ -52,7 +52,12 @@ export async function parseCommand(command: string, rawInput: string, params: un
         }
 
         case 'mkdir': {
-            const error = await hooks.makeDirectory(params);
+            const error = await hooks.makeDirectory(params.map(String));
+            return error ? error : '';
+        }
+
+        case 'rmdir': {
+            const error = await hooks.removeDirectory(params.map(String));
             return error ? error : '';
         }
     }

@@ -23,11 +23,17 @@ const activeProcess = ref<{
     send: (input: string) => void;
     stop: () => void;
 } | null>(null);
+const cursorPos = ref<number>(0);
 
 let currentCommandIndex = history.length;
 
 function focusInput() {
     inputRef.value?.focus();
+}
+
+function updateCursor() {
+    if (!inputRef.value) return;
+    cursorPos.value = inputRef.value.selectionStart || 0;
 }
 
 async function onCommandSend(event: KeyboardEvent) {
@@ -123,15 +129,23 @@ async function onCommandSend(event: KeyboardEvent) {
                 },
                 makeDirectory: async (params) => {
                     const dirName = params[0];
-                    if (!dirName || typeof dirName !== 'string') return 'Missing operand';
-
-                    console.log(currentDir.value)
+                    if (!dirName) return 'Missing operand';
 
                     try {
                         await fileSystemStore.makeDir(currentDir.value, dirName);
                     } catch (error) {
                         if (error instanceof Error) return `mkdir: ${error.message}`;
                         else return `mkdir: ${error}`;
+                    }
+                },
+                removeDirectory: async (params) => {
+                    if (params.length === 0) return 'Missing operand';
+
+                    try {
+                        await fileSystemStore.removeDir(currentDir.value, params);
+                    } catch (error) {
+                        if (error instanceof Error) return `rmdir: ${error.message}`;
+                        else return `rmdir: ${error}`;
                     }
                 }
             });
@@ -197,12 +211,12 @@ onMounted(async () => {
                 <span v-if="!activeProcess" class="prompt">
                     <span class="user-text">leethana@web</span>: <span class="current-dir">{{ currentDir === '/home' ? '~' : currentDir }}</span> >
                 </span>
-                <span class="display-text">{{ commandText }}<span v-show="inputFocused" class="cursor"></span></span>
+                <span class="display-text">{{ commandText.slice(0, cursorPos) }}<span v-show="inputFocused" class="cursor"></span>{{ commandText.slice(cursorPos) }}</span>
             </div>
             <p class="output">{{ currentOutput }}</p>
         </div>
 
-        <textarea ref="inputRef" v-model="commandText" class="hidden-terminal-input" autofocus spellcheck="false" autocomplete="off" @focus="inputFocused = true" @blur="inputFocused = false" @keydown.enter="onCommandSend" @keydown.up.prevent="onArrowKey" @keydown.down.prevent="onArrowKey" />
+        <textarea ref="inputRef" v-model="commandText" class="hidden-terminal-input" autofocus spellcheck="false" autocomplete="off" @focus="inputFocused = true" @blur="inputFocused = false" @keydown.enter="onCommandSend" @keydown.up.prevent="onArrowKey" @keydown.down.prevent="onArrowKey" @input="updateCursor()" @keyup="updateCursor()" @click="updateCursor()" />
     </div>
 </template>
 
