@@ -106,7 +106,7 @@ async function onCommandSend(event: KeyboardEvent) {
 
                         case '..': {
                             const filePathArray = currentDir.value.split('/');
-                            dirToChange = filePathArray[filePathArray.length - 2] || '/';
+                            dirToChange = `/${filePathArray[filePathArray.length - 2]}` || '/';
                             break;
                         }
 
@@ -128,14 +128,11 @@ async function onCommandSend(event: KeyboardEvent) {
                     return fileSystemStore.listDirectory(currentDir.value, params);
                 },
                 makeDirectory: async (params) => {
-                    const dirName = params[0];
-                    if (!dirName) return 'Missing operand';
-
                     try {
-                        await fileSystemStore.makeDir(currentDir.value, dirName);
+                        await fileSystemStore.makeDir(currentDir.value, params);
                     } catch (error) {
-                        if (error instanceof Error) return `mkdir: ${error.message}`;
-                        else return `mkdir: ${error}`;
+                        if (error instanceof Error) return error.message;
+                        else if (typeof error === 'string') return error;
                     }
                 },
                 removeDirectory: async (params) => {
@@ -144,10 +141,30 @@ async function onCommandSend(event: KeyboardEvent) {
                     try {
                         await fileSystemStore.removeDir(currentDir.value, params);
                     } catch (error) {
-                        if (error instanceof Error) return `rmdir: ${error.message}`;
-                        else return `rmdir: ${error}`;
+                        if (error instanceof Error) return error.message;
+                        else if (typeof error === 'string') return error;
                     }
-                }
+                },
+                createFile: async (params) => {
+                    if (params.length === 0) return 'touch: Missing file operand';
+
+                    try {
+                        await fileSystemStore.makeFile(currentDir.value, params);
+                    } catch (error) {
+                        if (error instanceof Error) return error.message;
+                        else if (typeof error === 'string') return error;
+                    }
+                },
+                rmNode: async (params) => {
+                    if (params.length === 0) return 'Missing operand';
+
+                    try {
+                        await fileSystemStore.removeNode(currentDir.value, params);
+                    } catch (error) {
+                        if (error instanceof Error) return error.message;
+                        else if (typeof error === 'string') return error;
+                    }
+                },
             });
 
             if (finalResult) {

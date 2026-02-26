@@ -34,7 +34,7 @@ async function getLuaInstance(): Promise<LuaEngine> {
     return luaInstance;
 }
 
-export async function parseCommand(command: string, rawInput: string, params: unknown[], hooks: { onOutput: (s: string) => void, onProcessStart: OnProcessStartHook, clearHistory: () => void, changeDirectory: (dir: string) => void | string, listDirectory: (params: string[]) => string, makeDirectory: (params: string[]) => Promise<void | string>, removeDirectory: (params: string[]) => Promise<void | string> } ): Promise<string> {
+export async function parseCommand(command: string, rawInput: string, params: unknown[], hooks: { onOutput: (s: string) => void, onProcessStart: OnProcessStartHook, clearHistory: () => void, changeDirectory: (dir: string) => void | string, listDirectory: (params: string[]) => string, makeDirectory: (params: string[]) => Promise<void | string>, removeDirectory: (params: string[]) => Promise<void | string>, createFile: (params: string[]) => Promise<void | string>, rmNode: (params: string[]) => Promise<void | string> } ): Promise<string> {
     switch (command) {
         case 'clear': {
             hooks.clearHistory();
@@ -58,6 +58,16 @@ export async function parseCommand(command: string, rawInput: string, params: un
 
         case 'rmdir': {
             const error = await hooks.removeDirectory(params.map(String));
+            return error ? error : '';
+        }
+
+        case 'touch': {
+            const error = await hooks.createFile(params.map(String));
+            return error ? error : '';
+        }
+
+        case 'rm': {
+            const error = await hooks.rmNode(params.map(String));
             return error ? error : '';
         }
     }

@@ -96,13 +96,13 @@ export const useFileSystem = defineStore('fileSystem', () => {
         return node;
     }
 
-    async function createDirPersist(name: string, path: string, owner = 'root', size: number = 0, children: Record<string, FileSystemNode> = {}, permissions: string = '755'): Promise<FileSystemNode> {
+    function createFile(name: string, path: string, owner = 'root', size: number = 0, permissions: string = '755'): FileSystemNode {
         const node: FileSystemNode = {
             name,
-            type: 'directory',
+            type: 'file',
             size: size,
             location: path,
-            children: children,
+            content: '',
             metadata: {
                 permissions: permissions,
                 owner,
@@ -111,25 +111,39 @@ export const useFileSystem = defineStore('fileSystem', () => {
             },
         };
 
-        await persist();
-
         return node;
     }
 
-    async function makeDir(parentPath: string, name: string) {
+    async function makeDir(parentPath: string, names: string[]) {
         const parentNode = getNode(parentPath);
         if (!parentNode) throw new Error('Target does not exist');
         if (parentNode.type !== 'directory') throw new Error('Target is not a directory');
 
         if (!parentNode.children) parentNode.children = {};
-        if (parentNode.children[name]) throw new Error('File exists');
 
-        const newPath = parentPath === '/' ? `/${name}` : `${parentPath}/${name}`;
-        parentNode.children[name] = createDir(name, newPath, 'leethana');
+        const errors: string[] = [];
+        let changed = false;
 
-        parentNode.metadata.modifiedAt = Date.now();
+        for (const name of names) {
+            try {
+                if (parentNode.children[name]) throw new Error('File exists');
 
-        await persist();
+                const newPath = parentPath === '/' ? `/${name}` : `${parentPath}/${name}`;
+                parentNode.children[name] = createDir(name, newPath, 'leethana');
+
+                changed = true;
+            } catch (error) {
+                if (error instanceof Error) errors.push(`mkdir: ${error.message}`);
+                else if (typeof error === 'string') errors.push(`mkdir: ${error}`);
+            }
+        }
+
+        if (changed) {
+            parentNode.metadata.modifiedAt = Date.now();
+            await persist();
+        }
+
+        if (errors.length !== 0) throw new Error(errors.join('\n'));
     }
 
     async function removeDir(parentPath: string, names: string[]) {
@@ -137,22 +151,61 @@ export const useFileSystem = defineStore('fileSystem', () => {
         if (!parentNode) throw new Error('Target does not exist');
         if (parentNode.type !== 'directory') throw new Error('Target is not a directory');
 
+        const errors: string[] = [];
+        let changed = false;
+
         for (const name of names) {
             try {
                 if (!parentNode.children || !parentNode.children[name]) throw new Error('No such file or directory');
                 if (parentNode.children[name].type !== 'directory') throw new Error('Not a directory');
                 if (parentNode.children?.[name].children && Object.keys(parentNode.children?.[name].children).length > 0) throw new Error('Directory not empty');
 
-                delete parentNode.children[name];  
+                delete parentNode.children[name];
+
+                changed = true;
             } catch (error) {
-                if (error instanceof Error) console.error(`rmdir: ${error.message}`);
-                else console.error(`rmdir: ${error}`);
+                if (error instanceof Error) errors.push(`rmdir: ${error.message}`);
+                else if (typeof error === 'string') errors.push(`rmdir: ${error}`);
             }
         }
 
-        parentNode.metadata.modifiedAt = Date.now();
+        if (changed) {
+            parentNode.metadata.modifiedAt = Date.now();
+            await persist();
+        }
 
-        await persist();
+        if (errors.length !== 0) throw new Error(errors.join('\n'));
+    }
+
+    async function makeFile(parentPath: string, names: string[]) {
+        const parentNode = getNode(parentPath);
+        if (!parentNode) throw new Error('Target does not exist');
+        if (parentNode.type !== 'directory') throw new Error('Target is not a directory');
+
+        const errors: string[] = [];
+        let changed = false;
+
+        for (const name of names) {
+            try {
+                if (!parentNode.children) parentNode.children = {};
+                if (parentNode.children[name]) throw new Error(`'${name}': File exists`);
+
+                const newPath = parentPath === '/' ? `/${name}` : `${parentPath}/${name}`;
+                parentNode.children[name] = createFile(name, newPath, 'leethana');
+
+                changed = true;
+            } catch (error) {
+                if (error instanceof Error) errors.push(`touch: ${error.message}`);
+                else if (typeof error === 'string') errors.push(`touch: ${error}`);
+            }
+        }
+
+        if (changed) {
+            parentNode.metadata.modifiedAt = Date.now();
+            await persist();
+        }
+
+        if (errors.length !== 0) throw new Error(errors.join('\n'));
     }
 
     function getNode(path: string): FileSystemNode | null {
@@ -175,6 +228,45 @@ export const useFileSystem = defineStore('fileSystem', () => {
         return currentNode;
     }
 
+    async function removeNode(parentPath: string, names: string[]) {
+        const parentNode = getNode(parentPath);
+        if (!parentNode) throw new Error('Target does not exist');
+        if (parentNode.type !== 'directory') throw new Error('Target is not a directory');
+
+        const optionsRegex = /-(.*?)\s/;
+        const optionsRegexArray = names.join(' ').match(optionsRegex);
+        const options: string[] = [];
+        if (optionsRegexArray && optionsRegexArray[1]) {
+            const optionsArray = optionsRegexArray[1].split('');
+            for (const option of optionsArray) options.push(option);
+            names.splice(0, 1);
+        }
+
+        const errors: string[] = [];
+        let changed = false;
+
+        for (const name of names) {
+            try {
+                if (!parentNode.children || !parentNode.children[name]) throw new Error('No such file or directory');
+                if (parentNode.children?.[name].children && Object.keys(parentNode.children?.[name].children).length > 0 && !options.includes('r')) throw new Error('Directory not empty');
+
+                delete parentNode.children[name];
+
+                changed = true;
+            } catch (error) {
+                if (error instanceof Error) errors.push(`rm: ${error.message}`);
+                else if (typeof error === 'string') errors.push(`rm: ${error}`);
+            }
+        }
+
+        if (changed) {
+            parentNode.metadata.modifiedAt = Date.now();
+            await persist();
+        }
+
+        if (errors.length !== 0) throw new Error(errors.join('\n'));
+    }
+
     function listDirectory(currentDir: string, params: string[]): string {
         const currentNode = getNode(currentDir);
         if (!currentNode) return '';
@@ -185,5 +277,5 @@ export const useFileSystem = defineStore('fileSystem', () => {
         return childrenArray.join('\n');
     }
 
-    return { drive, init, createDir, createDirPersist, makeDir, removeDir, getNode, listDirectory };
+    return { drive, init, makeDir, makeFile, removeDir, getNode, removeNode, listDirectory };
 });
