@@ -16,15 +16,6 @@ body {
     display: none;
 }
 
-::selection {
-  background: transparent;
-  color: inherit;
-}
-
-p, h1, h2, h3, li {
-    user-select: none;
-}
-
 button {
     outline: none;
     border: none;

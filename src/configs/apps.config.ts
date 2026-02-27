@@ -32,4 +32,10 @@ export const appRegistry: AppConfig[] = [
         icon: '/icons/terminal_icon.png',
         component: markRaw(defineAsyncComponent(() => import('../components/apps/TerminalApp.vue'))),
     },
+    {
+        id: 'text_plus_plus',
+        name: 'Text++',
+        icon: '/icons/text_plus_plus_icon.png',
+        component: markRaw(defineAsyncComponent(() => import('../components/apps/TextPlusPlusApp.vue'))),
+    },
 ];

@@ -78,6 +78,11 @@ export const useFileSystem = defineStore('fileSystem', () => {
         initialized.value = true;
     }
 
+    function getFileSize(content: string): number {
+        const size = new Blob([content]).size;
+        return size;
+    }
+
     function createDir(name: string, path: string, owner = 'root', size: number = 0, children: Record<string, FileSystemNode> = {}, permissions: string = '755'): FileSystemNode {
         const node: FileSystemNode = {
             name,
@@ -96,13 +101,13 @@ export const useFileSystem = defineStore('fileSystem', () => {
         return node;
     }
 
-    function createFile(name: string, path: string, owner = 'root', size: number = 0, permissions: string = '755'): FileSystemNode {
+    function createFile(name: string, path: string, owner = 'root', size: number = 0, content: string = '', permissions: string = '755'): FileSystemNode {
         const node: FileSystemNode = {
             name,
             type: 'file',
             size: size,
             location: path,
-            content: '',
+            content: content,
             metadata: {
                 permissions: permissions,
                 owner,
@@ -267,6 +272,32 @@ export const useFileSystem = defineStore('fileSystem', () => {
         if (errors.length !== 0) throw new Error(errors.join('\n'));
     }
 
+    async function editFile(filePath: string, fileName: string, content: string, allowCreateFile: boolean) {
+        const filePathArray = filePath.split('/');
+        const parentPath = `/${filePathArray.slice(0, filePathArray.length - 2).join('/')}`.replace(/\/+/g, '/');
+        const parentNode = getNode(parentPath);
+
+        if (!parentNode) throw new Error('Parent does not exist');
+
+        if (allowCreateFile) {
+            const file = createFile(fileName, filePath, 'leethana', getFileSize(content), content);
+            if (!parentNode.children) parentNode.children = {};
+            parentNode.children[fileName] = file;
+            return;
+        }
+
+        const file = getNode(filePath);
+
+        if (!file) throw new Error('Target does not exist');
+        if (file.type !== 'file') throw new Error('Target is not a file');
+
+        file.content = content;
+        file.size = getFileSize(content);
+        file.metadata.modifiedAt = Date.now();
+
+        await persist();
+    }
+
     function listDirectory(currentDir: string, params: string[]): string {
         const currentNode = getNode(currentDir);
         if (!currentNode) return '';
@@ -277,5 +308,5 @@ export const useFileSystem = defineStore('fileSystem', () => {
         return childrenArray.join('\n');
     }
 
-    return { drive, init, makeDir, makeFile, removeDir, getNode, removeNode, listDirectory };
+    return { drive, init, makeDir, makeFile, removeDir, getNode, removeNode, editFile, listDirectory };
 });

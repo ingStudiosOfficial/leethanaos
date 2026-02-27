@@ -1,1 +1,2 @@
-1. Make cursor follow actual input
+1. Text editor
+2. Allow multiple commands with &&?
