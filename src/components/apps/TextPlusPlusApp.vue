@@ -3,7 +3,12 @@ import '@material/web/button/filled-button.js';
 import '@material/web/button/filled-tonal-button.js';
 import '@material/web/icon/icon.js';
 import '@material/web/dialog/dialog.js';
-import { useFileSystem } from '@/stores/file_system';
+import '@material/web/textfield/outlined-text-field.js';
+import '@material/web/menu/menu.js';
+import '@material/web/menu/menu-item.js';
+import { type FileSystemNode, useFileSystem } from '@/stores/file_system';
+import DirectoryMenuItem from '../DirectoryMenuItem.vue';
+import { ref, toRaw, useTemplateRef } from 'vue';
 
 type ComponentProps = 
     | {
@@ -18,10 +23,19 @@ type ComponentProps =
         path?: string;
         content?: string;
     };
+    
+interface MdMenu extends HTMLElement {
+    open: boolean;
+}
 
 const props = defineProps<ComponentProps>();
 
 const fileSystemStore = useFileSystem();
+
+const fileToSave = ref<ComponentProps>(window.structuredClone(toRaw({ location: '/home', ...props })));
+const fileSystemFromRoot = ref<FileSystemNode | null>(fileSystemStore.getNode('/'));
+const dialogOpened = ref<boolean>(false);
+const fileSystemMenu = useTemplateRef<MdMenu>('file-system-menu');
 
 async function save() {
     if (!props.hasExisting) {
@@ -30,14 +44,32 @@ async function save() {
     }
 
     try {
-        await fileSystemStore.editFile(props.path, props.name, props.content, false);
+        await fileSystemStore.editFile(fileToSave.value.path || , props.name, props.content, false);
     } catch (error) {
         console.error('Error while editing file:', error);
     }
 }
 
 function saveAs() {
+    dialogOpened.value = true;
+}
 
+function handleSelect(path: string) {
+    console.log('Selected directory:', path);
+    fileToSave.value.path = path;
+    if (fileSystemMenu.value) fileSystemMenu.value.open = false;
+}
+
+function toggleMenu() {
+    if (!fileSystemMenu.value) return;
+
+    fileSystemMenu.value.open = !fileSystemMenu.value.open;
+}
+
+function onMenuClose() {
+    if (!fileSystemMenu.value) return;
+
+    fileSystemMenu.value.open = false;
 }
 </script>
 
@@ -54,13 +86,22 @@ function saveAs() {
             </md-filled-tonal-button>
         </div>
         <div class="textarea-wrapper">
-             <textarea class="editable-area" autofocus="true"></textarea>
+             <textarea v-model="fileToSave.content" class="editable-area" autofocus="true"></textarea>
         </div>
     </div>
-    <md-dialog>
+    <md-dialog :open="dialogOpened" @closed="dialogOpened = false">
         <div slot="headline">Save as</div>
-        <div slot="content">
-            
+        <div class="save-dialog-content" slot="content">
+            <md-outlined-text-field v-model="fileToSave.name" label="Filename"></md-outlined-text-field>
+            <md-filled-button id="file-location" @click="toggleMenu()">Location</md-filled-button>
+            <md-filled-button id="file-location" @click="toggleMenu()" @click="save()">Save</md-filled-button>
+            <md-menu class="file-system-menu" ref="file-system-menu" anchor="file-location" positioning="fixed" has-overflow @closed="onMenuClose()">
+                <md-menu-item @click="handleSelect('/')">
+                    <div slot="headline">/ (root)</div>
+                    <md-icon slot="start">folder_special</md-icon>
+                </md-menu-item>
+                <DirectoryMenuItem :nodes="fileSystemFromRoot?.children" @select="handleSelect" />
+            </md-menu>
         </div>
     </md-dialog>
 </template>
@@ -105,5 +146,13 @@ function saveAs() {
     height: 100%;
     padding: 20px;
     box-sizing: border-box;
+}
+
+.save-dialog-content {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: relative;
+    overflow: visible;
 }
 </style>
