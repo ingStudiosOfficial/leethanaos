@@ -10,6 +10,7 @@ export interface Process {
     minimized: boolean;
     fullscreen: boolean;
     zIndex: number;
+    props?: Record<string, unknown>;
 }
 
 export const useProcessManager = defineStore('processManager', () => {
@@ -17,10 +18,11 @@ export const useProcessManager = defineStore('processManager', () => {
     const focusTier = ref<Process[]>([]);
     const topZIndex = ref<number>(100);
 
-    function openApp(appConfig: AppConfig) {
+    function openApp(appConfig: AppConfig, props?: Record<string, unknown>) {
         const existingProcess = activeProcesses.value.find(p => p.appId === appConfig.id);
         if (existingProcess) {
             existingProcess.minimized = false;
+            if (props) existingProcess.props = props;
             focusApp(existingProcess.id);
             return;
         }
@@ -33,6 +35,7 @@ export const useProcessManager = defineStore('processManager', () => {
             minimized: false,
             fullscreen: false,
             zIndex: ++topZIndex.value,
+            props: props,
         };
 
         activeProcesses.value.push(newProcess);

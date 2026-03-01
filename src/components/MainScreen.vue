@@ -104,7 +104,7 @@ function windowOnLeave(el: Element, done: () => void) {
         <div v-for="process in processManagerStore.activeProcesses" :key="process.id">
             <Transition :css="false" @enter="windowOnEnter" @leave="windowOnLeave">
                 <WindowShell v-show="!process.minimized" :style="{ zIndex: process.zIndex }" :name="process.name" :icon="getIcon(process.appId)" :fullscreen="process.fullscreen" :id="`window-${process.id}`" @mousedown="processManagerStore.focusApp(process.id)" @minimize="processManagerStore.minimizeApp(process.id)" @fullscreen="processManagerStore.toggleFullscreenApp(process.id)" @close="processManagerStore.closeApp(process.id)">
-                    <component :is="process.component"></component>
+                    <component :is="process.component" v-bind="process.props"></component>
                 </WindowShell>
             </Transition>
         </div>

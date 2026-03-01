@@ -10,33 +10,32 @@ import '@material/web/button/outlined-button.js';
 import { type FileSystemNode, useFileSystem } from '@/stores/file_system';
 import DirectoryMenuItem from '../DirectoryMenuItem.vue';
 import { ref, toRaw, useTemplateRef } from 'vue';
+import { MdDialog } from '@material/web/dialog/dialog.js';
+import type { MdMenu } from '@material/web/menu/menu.js';
 
-type ComponentProps = 
+export type TextPPProps = 
     | {
-        hasExisting: true;
+        hasExisting?: true;
         name: string;
         path: string;
         content: string;
     }
     | {
-        hasExisting: false;
+        hasExisting?: false;
         name?: string;
         path?: string;
         content?: string;
     };
-    
-interface MdMenu extends HTMLElement {
-    open: boolean;
-}
 
-const props = defineProps<ComponentProps>();
+const props = defineProps<TextPPProps>();
 
 const fileSystemStore = useFileSystem();
 
-const fileToSave = ref<ComponentProps>(window.structuredClone(toRaw({ ...props, path: '/home' })));
+const fileToSave = ref<TextPPProps>(window.structuredClone(toRaw(props)));
 const fileSystemFromRoot = ref<FileSystemNode | null>(fileSystemStore.getNode('/'));
 const dialogOpened = ref<boolean>(false);
-const fileSystemMenu = useTemplateRef<MdMenu>('file-system-menu');
+const fileSystemMenu = useTemplateRef<MdMenu>('fileSystemMenu');
+const fileDialog = useTemplateRef<MdDialog>('saveDialog');
 
 async function save() {
     if (!fileToSave.value.hasExisting) {
@@ -44,8 +43,10 @@ async function save() {
         return;
     }
 
+    console.log(fileToSave);
+
     try {
-        await fileSystemStore.editFile(fileToSave.value.path || '/home', fileToSave.value.name, fileToSave.value.content || '', false);
+        await fileSystemStore.editFile(fileToSave.value.path || '/home', fileToSave.value.name, fileToSave.value.content || '', true);
     } catch (error) {
         console.error('Error while editing file:', error);
     }
@@ -73,6 +74,11 @@ function onMenuClose() {
     fileSystemMenu.value.open = false;
 }
 
+async function closeDialog() {
+    await fileDialog.value?.close();
+    dialogOpened.value = false;
+}
+
 async function triggerSaveFromDialog() {
     if (!fileToSave.value.name || !fileToSave.value.path) return;
 
@@ -80,6 +86,7 @@ async function triggerSaveFromDialog() {
 
     try {
         await fileSystemStore.editFile(fileToSave.value.path || '/home', fileToSave.value.name, fileToSave.value.content || '', true);
+        closeDialog();
     } catch (error) {
         console.error('Error while editing file:', error);
     }
@@ -90,10 +97,10 @@ async function triggerSaveFromDialog() {
     <div class="app-wrapper">
         <div class="actions-menu">
             <md-filled-button @click="save()">
-                {{ hasExisting? 'Save' : 'Save as' }}
-                <md-icon slot="icon">{{ hasExisting ? 'save' : 'save_as' }}</md-icon>
+                {{ fileToSave.hasExisting? 'Save' : 'Save as' }}
+                <md-icon slot="icon">{{ fileToSave.hasExisting ? 'save' : 'save_as' }}</md-icon>
             </md-filled-button>
-            <md-filled-tonal-button v-if="hasExisting" @click="saveAs()">
+            <md-filled-tonal-button v-if="fileToSave.hasExisting" @click="saveAs()">
                 Save as
                 <md-icon slot="icon">save_as</md-icon>
             </md-filled-tonal-button>
@@ -102,7 +109,7 @@ async function triggerSaveFromDialog() {
              <textarea v-model="fileToSave.content" class="editable-area" autofocus="true"></textarea>
         </div>
     </div>
-    <md-dialog :open="dialogOpened" @closed="dialogOpened = false">
+    <md-dialog :open="dialogOpened" ref="saveDialog" @closed="dialogOpened = false">
         <div slot="headline">Save as</div>
         <div class="save-dialog-content" slot="content">
             <md-outlined-text-field v-model="fileToSave.name" label="Filename"></md-outlined-text-field>
@@ -111,7 +118,7 @@ async function triggerSaveFromDialog() {
                 <p>{{ fileToSave.path }}</p>
             </div>
             <md-filled-button id="file-location" @click="triggerSaveFromDialog()">Save</md-filled-button>
-            <md-menu class="file-system-menu" ref="file-system-menu" anchor="file-location" positioning="fixed" has-overflow @closed="onMenuClose()">
+            <md-menu class="file-system-menu" ref="fileSystemMenu" anchor="file-location" positioning="fixed" has-overflow @closed="onMenuClose()">
                 <md-menu-item @click="handleSelect('/')">
                     <div slot="headline">/ (root)</div>
                     <md-icon slot="start">folder_special</md-icon>

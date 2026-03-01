@@ -275,9 +275,9 @@ export const useFileSystem = defineStore('fileSystem', () => {
     async function editFile(parentPath: string, fileName: string, content: string, allowCreateFile: boolean) {
         const filePath = `${parentPath}/${fileName}`.replace(/\/+/g, '/');
 
-        const file = getNode(filePath);
+        console.log(filePath);
 
-        console.log(file);
+        const file = getNode(filePath);
 
         if (!file) {
             if (!allowCreateFile) {

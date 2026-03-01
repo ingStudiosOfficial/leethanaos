@@ -1,7 +1,10 @@
 <script setup lang="ts">
+import { appRegistry } from '@/configs/apps.config';
 import { useFileSystem } from '@/stores/file_system';
+import { useProcessManager } from '@/stores/process_manager';
 import { getLuaVersion, parseCommand } from '@/utils/terminal_utils';
 import { onMounted, reactive, ref } from 'vue';
+import type { TextPPProps } from './TextPlusPlusApp.vue';
 
 interface TerminalHistory {
     command: string;
@@ -10,6 +13,7 @@ interface TerminalHistory {
     key: string;
 }
 
+const processManagerStore = useProcessManager();
 const fileSystemStore = useFileSystem();
 
 const currentDir = ref<string>('/home');
@@ -164,6 +168,36 @@ async function onCommandSend(event: KeyboardEvent) {
                         if (error instanceof Error) return error.message;
                         else if (typeof error === 'string') return error;
                     }
+                },
+                openTPP: (params) => {
+                    const tppAppConfig = appRegistry.find(a => a.id === 'text_plus_plus');
+                    if (!tppAppConfig) return 'Could not locate the TextPlusPlus app config';
+
+                    if (params.length === 0 || !params[0]) {
+                        processManagerStore.openApp(tppAppConfig, {
+                            hasExisting: false,
+                        } as TextPPProps);
+                        return;
+                    }
+
+                    const fileToOpen = fileSystemStore.getNode(`${currentDir.value}/${params[0]}`.replace(/\/+/g, '/'));
+                    if (!fileToOpen) return 'File does not exist';
+
+                    processManagerStore.openApp(tppAppConfig, {
+                        hasExisting: true,
+                        name: fileToOpen.name,
+                        path: fileToOpen.location.split('/').slice(0, -1).join('/'),
+                        content: fileToOpen.content,
+                    } as TextPPProps);
+                },
+                getFileContent: (params) => {
+                    const fileToOpen = fileSystemStore.getNode(`${currentDir.value}/${params[0]}`.replace(/\/+/g, '/'));
+                    if (!fileToOpen) return null;
+
+                    const content = fileToOpen.content;
+                    if (!content) return null;
+
+                    return content;
                 },
             });
 
