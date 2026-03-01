@@ -272,28 +272,43 @@ export const useFileSystem = defineStore('fileSystem', () => {
         if (errors.length !== 0) throw new Error(errors.join('\n'));
     }
 
-    async function editFile(filePath: string, fileName: string, content: string, allowCreateFile: boolean) {
-        const filePathArray = filePath.split('/');
-        const parentPath = `/${filePathArray.slice(0, filePathArray.length - 2).join('/')}`.replace(/\/+/g, '/');
-        const parentNode = getNode(parentPath);
-
-        if (!parentNode) throw new Error('Parent does not exist');
-
-        if (allowCreateFile) {
-            const file = createFile(fileName, filePath, 'leethana', getFileSize(content), content);
-            if (!parentNode.children) parentNode.children = {};
-            parentNode.children[fileName] = file;
-            return;
-        }
+    async function editFile(parentPath: string, fileName: string, content: string, allowCreateFile: boolean) {
+        const filePath = `${parentPath}/${fileName}`.replace(/\/+/g, '/');
 
         const file = getNode(filePath);
 
-        if (!file) throw new Error('Target does not exist');
-        if (file.type !== 'file') throw new Error('Target is not a file');
+        console.log(file);
 
-        file.content = content;
-        file.size = getFileSize(content);
-        file.metadata.modifiedAt = Date.now();
+        if (!file) {
+            if (!allowCreateFile) {
+                throw new Error('Target does not exist');
+            }
+            
+            const parentNode = getNode(parentPath);
+            if (!parentNode) throw new Error(`Parent directory '${parentPath}' does not exist`);
+            if (parentNode.type !== 'directory') throw new Error('Parent is not a directory');
+
+            const newFile = createFile(
+                fileName!, 
+                filePath, 
+                'leethana', 
+                getFileSize(content), 
+                content
+            );
+
+            if (!parentNode.children) parentNode.children = {};
+            parentNode.children[fileName!] = newFile;
+            
+            console.log('File created.');
+        } else {
+            if (file.type !== 'file') throw new Error('Target is not a file');
+
+            file.content = content;
+            file.size = getFileSize(content);
+            file.metadata.modifiedAt = Date.now();
+            
+            console.log('File updated.');
+        }
 
         await persist();
     }

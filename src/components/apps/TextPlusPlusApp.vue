@@ -6,6 +6,7 @@ import '@material/web/dialog/dialog.js';
 import '@material/web/textfield/outlined-text-field.js';
 import '@material/web/menu/menu.js';
 import '@material/web/menu/menu-item.js';
+import '@material/web/button/outlined-button.js';
 import { type FileSystemNode, useFileSystem } from '@/stores/file_system';
 import DirectoryMenuItem from '../DirectoryMenuItem.vue';
 import { ref, toRaw, useTemplateRef } from 'vue';
@@ -32,19 +33,19 @@ const props = defineProps<ComponentProps>();
 
 const fileSystemStore = useFileSystem();
 
-const fileToSave = ref<ComponentProps>(window.structuredClone(toRaw({ location: '/home', ...props })));
+const fileToSave = ref<ComponentProps>(window.structuredClone(toRaw({ ...props, path: '/home' })));
 const fileSystemFromRoot = ref<FileSystemNode | null>(fileSystemStore.getNode('/'));
 const dialogOpened = ref<boolean>(false);
 const fileSystemMenu = useTemplateRef<MdMenu>('file-system-menu');
 
 async function save() {
-    if (!props.hasExisting) {
+    if (!fileToSave.value.hasExisting) {
         saveAs();
         return;
     }
 
     try {
-        await fileSystemStore.editFile(fileToSave.value.path || , props.name, props.content, false);
+        await fileSystemStore.editFile(fileToSave.value.path || '/home', fileToSave.value.name, fileToSave.value.content || '', false);
     } catch (error) {
         console.error('Error while editing file:', error);
     }
@@ -71,6 +72,18 @@ function onMenuClose() {
 
     fileSystemMenu.value.open = false;
 }
+
+async function triggerSaveFromDialog() {
+    if (!fileToSave.value.name || !fileToSave.value.path) return;
+
+    fileToSave.value.hasExisting = true;
+
+    try {
+        await fileSystemStore.editFile(fileToSave.value.path || '/home', fileToSave.value.name, fileToSave.value.content || '', true);
+    } catch (error) {
+        console.error('Error while editing file:', error);
+    }
+}
 </script>
 
 <template>
@@ -93,8 +106,11 @@ function onMenuClose() {
         <div slot="headline">Save as</div>
         <div class="save-dialog-content" slot="content">
             <md-outlined-text-field v-model="fileToSave.name" label="Filename"></md-outlined-text-field>
-            <md-filled-button id="file-location" @click="toggleMenu()">Location</md-filled-button>
-            <md-filled-button id="file-location" @click="toggleMenu()" @click="save()">Save</md-filled-button>
+            <div class="location-container">
+                <md-outlined-button id="file-location" @click="toggleMenu()">Location</md-outlined-button>
+                <p>{{ fileToSave.path }}</p>
+            </div>
+            <md-filled-button id="file-location" @click="triggerSaveFromDialog()">Save</md-filled-button>
             <md-menu class="file-system-menu" ref="file-system-menu" anchor="file-location" positioning="fixed" has-overflow @closed="onMenuClose()">
                 <md-menu-item @click="handleSelect('/')">
                     <div slot="headline">/ (root)</div>
@@ -154,5 +170,13 @@ function onMenuClose() {
     gap: 10px;
     position: relative;
     overflow: visible;
+}
+
+.location-container {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
 }
 </style>
