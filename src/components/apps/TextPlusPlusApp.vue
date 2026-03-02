@@ -36,6 +36,7 @@ const fileSystemFromRoot = ref<FileSystemNode | null>(fileSystemStore.getNode('/
 const dialogOpened = ref<boolean>(false);
 const fileSystemMenu = useTemplateRef<MdMenu>('fileSystemMenu');
 const fileDialog = useTemplateRef<MdDialog>('saveDialog');
+const saveError = ref<string>('');
 
 async function save() {
     if (!fileToSave.value.hasExisting) {
@@ -49,6 +50,7 @@ async function save() {
         await fileSystemStore.editFile(fileToSave.value.path || '/home', fileToSave.value.name, fileToSave.value.content || '', true);
     } catch (error) {
         console.error('Error while editing file:', error);
+        saveError.value = error as string;
     }
 }
 
@@ -80,7 +82,10 @@ async function closeDialog() {
 }
 
 async function triggerSaveFromDialog() {
-    if (!fileToSave.value.name || !fileToSave.value.path) return;
+    if (!fileToSave.value.name || !fileToSave.value.path) {
+        saveError.value = 'Filename or path is missing.';
+        return;
+    }
 
     fileToSave.value.hasExisting = true;
 
@@ -89,6 +94,7 @@ async function triggerSaveFromDialog() {
         closeDialog();
     } catch (error) {
         console.error('Error while editing file:', error);
+        saveError.value = error as string;
     }
 }
 </script>
@@ -118,6 +124,7 @@ async function triggerSaveFromDialog() {
                 <p>{{ fileToSave.path }}</p>
             </div>
             <md-filled-button id="file-location" @click="triggerSaveFromDialog()">Save</md-filled-button>
+            <p v-if="saveError" class="save-error">{{ saveError }}</p>
             <md-menu class="file-system-menu" ref="fileSystemMenu" anchor="file-location" positioning="fixed" has-overflow @closed="onMenuClose()">
                 <md-menu-item @click="handleSelect('/')">
                     <div slot="headline">/ (root)</div>
@@ -185,5 +192,9 @@ async function triggerSaveFromDialog() {
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
+}
+
+.save-error {
+    color: var(--md-sys-color-error);
 }
 </style>
