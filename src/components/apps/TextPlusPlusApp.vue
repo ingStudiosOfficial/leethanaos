@@ -169,6 +169,7 @@ async function triggerSaveFromDialog() {
     background-color: transparent;
     outline: none;
     font-size: 1.2rem;
+    color: var(--md-sys-color-on-surface);
 }
 
 .textarea-wrapper {
