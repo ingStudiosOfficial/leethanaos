@@ -1,15 +1,15 @@
 export function helpCommand(): string {
-    const helpInfo = `[leethanaOS v1.0.0]
-    --- HELP ---
+    const helpInfo = `[leethanaOS v1.0.0]\n
+    --- HELP ---\n
     About:
     leethanaOS is a web based portfolio operatins simulator I made in Vue.js.
-    It comes with a working Lua interpreter (thanks to Wasmoon) and a persistent simulated file system stored in IndexedDB.
+    It comes with a working Lua interpreter (thanks to Wasmoon) and a persistent simulated file system stored in IndexedDB.\n
     Features:
     - Openable, dragable, and resizable app windows
     - A terminal with (some) standard Linux commands
     - A Lua interpreter (Wasmoon) in the terminal
     - A text editor app (Text++) where you can edit files
-    - A simulated persistent file system (stored in IndexedDB)
+    - A simulated persistent file system (stored in IndexedDB)\n
     Commands:
     - test: returns a string if the commands works
     - openurl [url]: opens the URL in a new browser tab
@@ -26,7 +26,10 @@ export function helpCommand(): string {
     - tpp [filename]: opens the file in the Text++ app
     - lua [filename]: evaluates the Lua file
     [Standard Lua commands also included]
-    - readline (Lua command): gets input from the command line (should be awaited with :await())`;
+    - readline (Lua command): gets input from the command line (should be awaited with :await())\n
+    Upcoming:
+    - A GUI file explorer
+    - A proxied browser (iframe + Go web proxy)`;
 
     return helpInfo;
 }

@@ -244,7 +244,7 @@ onMounted(async () => {
 
 <template>
     <div class="app-wrapper" @click="focusInput">
-        <p>leethanaOS [Version 1.0.0, {{ luaVersion }}]</p>
+        <p>leethanaOS [Version 1.0.0, {{ luaVersion }}] [type 'help' for help]</p>
         <p>© 2026 (ing) Studios</p>
         
         <div v-for="item in history" :key="item.key" class="history">
