@@ -1,5 +1,6 @@
 import { compgenCommand } from "@/commands/compgen.command";
 import { echoCommand } from "@/commands/echo.command";
+import { helpCommand } from "@/commands/help.command";
 import { openUrlCommand } from "@/commands/open_url.command";
 import { testCommand } from "@/commands/test.command";
 
@@ -25,4 +26,8 @@ export const availableCommands: Command[] = [
         name: 'echo',
         function: echoCommand,
     },
+    {
+        name: 'help',
+        function: helpCommand,
+    }
 ];

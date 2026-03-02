@@ -13,6 +13,8 @@
             <li>Framework: Vue.js</li>
             <li>Design style: Material 3</li>
         </ul>
+        <h2>help</h2>
+        <p>Uhh try typing 'help' in the terminal I guess...</p>
     </div>
 </template>
 
