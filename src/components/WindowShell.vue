@@ -35,7 +35,7 @@ let startY = 0;
 const initMouse: InitMouse = { x: 0, y: 0 };
 const initSize: InitSize = { width: width.value, height: height.value };
 
-function startDrag(event: MouseEvent) {
+function startDrag(event: PointerEvent) {
     if (props.fullscreen) return;
 
     isDragging.value = true;
@@ -43,11 +43,13 @@ function startDrag(event: MouseEvent) {
     startX = event.clientX - x.value;
     startY = event.clientY - y.value;
 
-    document.addEventListener('mousemove', onDrag);
-    document.addEventListener('mouseup', stopDrag);
+    (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+
+    document.addEventListener('pointermove', onDrag);
+    document.addEventListener('pointerup', stopDrag);
 }
 
-function onDrag(event: MouseEvent) {
+function onDrag(event: PointerEvent) {
     if (!isDragging.value) return;
 
     x.value = event.clientX - startX;
@@ -57,11 +59,11 @@ function onDrag(event: MouseEvent) {
 function stopDrag() {
     isDragging.value = false;
 
-    document.removeEventListener('mousemove', onDrag);
-    document.removeEventListener('mouseup', stopDrag);
+    document.removeEventListener('pointermove', onDrag);
+    document.removeEventListener('pointerup', stopDrag);
 }
 
-function startResize(event: MouseEvent) {
+function startResize(event: PointerEvent) {
     if (props.fullscreen) return;
 
     initMouse.x = event.clientX;
@@ -69,11 +71,11 @@ function startResize(event: MouseEvent) {
     initSize.width = width.value;
     initSize.height = height.value;
 
-    document.addEventListener('mousemove', onResize);
-    document.addEventListener('mouseup', stopResize);
+    document.addEventListener('pointermove', onResize);
+    document.addEventListener('pointerup', stopResize);
 }
 
-function onResize(event: MouseEvent) {
+function onResize(event: PointerEvent) {
     const deltaXPixels = event.clientX - initMouse.x;
     const deltaYPixels = event.clientY - initMouse.y;
 
@@ -85,8 +87,8 @@ function onResize(event: MouseEvent) {
 }
 
 function stopResize() {
-    document.removeEventListener('mousemove', onResize);
-    document.removeEventListener('mouseup', stopResize);
+    document.removeEventListener('pointermove', onResize);
+    document.removeEventListener('pointerup', stopResize);
 }
 </script>
 
@@ -98,7 +100,7 @@ function stopResize() {
         height: props.fullscreen ? '100dvh' : `${height}dvh`,
         borderRadius: props.fullscreen ? '0' : '25px',
     }">
-        <div class="window-bar" @mousedown.prevent.stop="startDrag">
+        <div class="window-bar" @pointerdown="startDrag">
             <div class="bar-left">
                 <img class="window-icon" :src="props.icon" />
                 <p class="window-name">{{ props.name }}</p>
@@ -118,7 +120,7 @@ function stopResize() {
         <div class="window-content">
             <slot></slot>
         </div>
-        <div class="botright-resize" @mousedown.prevent.stop="startResize"></div>
+        <div class="botright-resize" @pointerdown.prevent.stop="startResize"></div>
     </div>
 </template>
 
@@ -151,6 +153,9 @@ function stopResize() {
     top: 0;
     left: 0;
     overflow: scroll;
+    touch-action: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .window-content {
@@ -193,5 +198,7 @@ function stopResize() {
     width: 20px;
     height: 20px;
     cursor: nwse-resize;
+    touch-action: none;
+    user-select: none;
 }
 </style>
