@@ -43,8 +43,6 @@ function startDrag(event: PointerEvent) {
     startX = event.clientX - x.value;
     startY = event.clientY - y.value;
 
-    (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
-
     document.addEventListener('pointermove', onDrag);
     document.addEventListener('pointerup', stopDrag);
 }
