@@ -38,4 +38,10 @@ export const appRegistry: AppConfig[] = [
         icon: '/icons/text_plus_plus_icon.png',
         component: markRaw(defineAsyncComponent(() => import('../components/apps/TextPlusPlusApp.vue'))),
     },
+    {
+        id: 'markdownly',
+        name: 'Markdownly',
+        icon: '/icons/markdownly_icon.png',
+        component: markRaw(defineAsyncComponent(() => import('../components/apps/MarkdownlyApp.vue'))),
+    },
 ];

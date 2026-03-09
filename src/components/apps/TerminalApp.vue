@@ -5,6 +5,7 @@ import { useProcessManager } from '@/stores/process_manager';
 import { getLuaVersion, parseCommand } from '@/utils/terminal_utils';
 import { onMounted, reactive, ref } from 'vue';
 import type { TextPPProps } from './TextPlusPlusApp.vue';
+import type { MarkdownlyProps } from './MarkdownlyApp.vue';
 
 interface TerminalHistory {
     command: string;
@@ -199,6 +200,24 @@ async function onCommandSend(event: KeyboardEvent) {
 
                     return content;
                 },
+                openMd: (params) => {
+                    const markdownlyAppConfig = appRegistry.find(a => a.id === 'markdownly');
+                    if (!markdownlyAppConfig) return 'Could not locate the Markdownly app config';
+
+                    if (params.length === 0 || !params[0]) {
+                        processManagerStore.openApp(markdownlyAppConfig, {
+                            content: '',
+                        } as MarkdownlyProps);
+                        return;
+                    }
+
+                    const fileToOpen = fileSystemStore.getNode(`${currentDir.value}/${params[0]}`.replace(/\/+/g, '/'));
+                    if (!fileToOpen) return 'File does not exist';
+
+                    processManagerStore.openApp(markdownlyAppConfig, {
+                        content: fileToOpen.content,
+                    } as MarkdownlyProps);
+                }
             });
 
             if (finalResult) {

@@ -9,7 +9,8 @@ export function helpCommand(): string {
     - A terminal with (some) standard Linux commands
     - A Lua interpreter (Wasmoon) in the terminal
     - A text editor app (Text++) where you can edit files
-    - A simulated persistent file system (stored in IndexedDB)\n
+    - A simulated persistent file system (stored in IndexedDB)
+    - A Markdown preview app (Markdownly)\n
     Commands:
     - test: returns a string if the commands works
     - openurl [url]: opens the URL in a new browser tab

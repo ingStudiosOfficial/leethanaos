@@ -34,7 +34,7 @@ async function getLuaInstance(): Promise<LuaEngine> {
     return luaInstance;
 }
 
-export async function parseCommand(command: string, rawInput: string, params: unknown[], hooks: { onOutput: (s: string) => void, onProcessStart: OnProcessStartHook, clearHistory: () => void, changeDirectory: (dir: string) => void | string, listDirectory: (params: string[]) => string, makeDirectory: (params: string[]) => Promise<void | string>, removeDirectory: (params: string[]) => Promise<void | string>, createFile: (params: string[]) => Promise<void | string>, rmNode: (params: string[]) => Promise<void | string>, openTPP: (params: string[]) => void | string, getFileContent: (params: string[]) => string | null } ): Promise<string> {
+export async function parseCommand(command: string, rawInput: string, params: unknown[], hooks: { onOutput: (s: string) => void, onProcessStart: OnProcessStartHook, clearHistory: () => void, changeDirectory: (dir: string) => void | string, listDirectory: (params: string[]) => string, makeDirectory: (params: string[]) => Promise<void | string>, removeDirectory: (params: string[]) => Promise<void | string>, createFile: (params: string[]) => Promise<void | string>, rmNode: (params: string[]) => Promise<void | string>, openTPP: (params: string[]) => void | string, getFileContent: (params: string[]) => string | null, openMd: (params: string[]) => void | string } ): Promise<string> {
     let evaluateLuaFromFile = false;
 
     switch (command) {
@@ -81,6 +81,11 @@ export async function parseCommand(command: string, rawInput: string, params: un
         case 'lua': {
             evaluateLuaFromFile = true;
             break;
+        }
+
+        case 'md': {
+            const error = hooks.openMd(params.map(String));
+            return error || '';
         }
     }
 

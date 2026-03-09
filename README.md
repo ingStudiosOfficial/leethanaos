@@ -12,6 +12,7 @@ It comes with a working Lua interpreter (thanks to Wasmoon) and a persistent sim
 - A Lua interpreter (Wasmoon) in the terminal
 - A text editor app (Text++) where you can edit files
 - A simulated persistent file system (stored in IndexedDB)
+- A Markdown preview app (Markdownly)
 
 ### Commands
 - test: returns a string if the commands works
@@ -28,6 +29,7 @@ It comes with a working Lua interpreter (thanks to Wasmoon) and a persistent sim
 - rm [options]: removes a file/directory/shortcut
 - tpp [filename]: opens the file in the Text++ app
 - lua [filename]: evaluates the Lua file
+- md [filename]: opens the file in the Markdownly app
 [Standard Lua commands also included]
 - readline (Lua command): gets input from the command line (should be awaited with :await())
 

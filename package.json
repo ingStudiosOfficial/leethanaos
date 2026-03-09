@@ -15,7 +15,9 @@
     "format": "prettier --write --experimental-cli src/"
   },
   "dependencies": {
+    "@babel/runtime": "^7.28.6",
     "@material/web": "^2.4.1",
+    "@uivjs/vue-markdown-preview": "^1.0.5",
     "gsap": "^3.14.2",
     "idb": "^8.0.3",
     "pinia": "^3.0.4",
