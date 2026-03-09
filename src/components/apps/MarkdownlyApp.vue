@@ -7,12 +7,17 @@ export type MarkdownlyProps = {
 }
 
 const props = defineProps<MarkdownlyProps>();
+
+const initialMarkdown = `
+# Welcome to Markdownly!
+Open a Markdown file in the terminal by entering \`\`\`md [filename]\`\`\`.
+`;
 </script>
 
 <template>
     <div class="app-wrapper">
         <MarkdownPreview class="md-preview">
-            {{ props.content || '# Your Markdown Content' }}
+            {{ props.content || initialMarkdown }}
         </MarkdownPreview>
     </div>
     
