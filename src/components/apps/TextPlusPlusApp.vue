@@ -114,26 +114,26 @@ async function triggerSaveFromDialog() {
         <div class="textarea-wrapper">
              <textarea v-model="fileToSave.content" class="editable-area" autofocus="true"></textarea>
         </div>
-    </div>
-    <md-dialog :open="dialogOpened" ref="saveDialog" @closed="dialogOpened = false">
-        <div slot="headline">Save as</div>
-        <div class="save-dialog-content" slot="content">
-            <md-outlined-text-field v-model="fileToSave.name" label="Filename"></md-outlined-text-field>
-            <div class="location-container">
-                <md-outlined-button id="file-location" @click="toggleMenu()">Location</md-outlined-button>
-                <p>{{ fileToSave.path }}</p>
+        <md-dialog :open="dialogOpened" ref="saveDialog" @closed="dialogOpened = false">
+            <div slot="headline">Save as</div>
+            <div class="save-dialog-content" slot="content">
+                <md-outlined-text-field v-model="fileToSave.name" label="Filename"></md-outlined-text-field>
+                <div class="location-container">
+                    <md-outlined-button id="file-location" @click="toggleMenu()">Location</md-outlined-button>
+                    <p>{{ fileToSave.path }}</p>
+                </div>
+                <md-filled-button id="file-location" @click="triggerSaveFromDialog()">Save</md-filled-button>
+                <p v-if="saveError" class="save-error">{{ saveError }}</p>
+                <md-menu class="file-system-menu" ref="fileSystemMenu" anchor="file-location" positioning="fixed" has-overflow @closed="onMenuClose()">
+                    <md-menu-item @click="handleSelect('/')">
+                        <div slot="headline">/ (root)</div>
+                        <md-icon slot="start">folder_special</md-icon>
+                    </md-menu-item>
+                    <DirectoryMenuItem :nodes="fileSystemFromRoot?.children" @select="handleSelect" />
+                </md-menu>
             </div>
-            <md-filled-button id="file-location" @click="triggerSaveFromDialog()">Save</md-filled-button>
-            <p v-if="saveError" class="save-error">{{ saveError }}</p>
-            <md-menu class="file-system-menu" ref="fileSystemMenu" anchor="file-location" positioning="fixed" has-overflow @closed="onMenuClose()">
-                <md-menu-item @click="handleSelect('/')">
-                    <div slot="headline">/ (root)</div>
-                    <md-icon slot="start">folder_special</md-icon>
-                </md-menu-item>
-                <DirectoryMenuItem :nodes="fileSystemFromRoot?.children" @select="handleSelect" />
-            </md-menu>
-        </div>
-    </md-dialog>
+        </md-dialog>
+    </div>
 </template>
 
 <style scoped>

@@ -215,6 +215,8 @@ async function onCommandSend(event: KeyboardEvent) {
                     if (!fileToOpen) return 'File does not exist';
 
                     processManagerStore.openApp(markdownlyAppConfig, {
+                        name: fileToOpen.name,
+                        location: fileToOpen.location,
                         content: fileToOpen.content,
                     } as MarkdownlyProps);
                 }
