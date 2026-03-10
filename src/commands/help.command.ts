@@ -26,6 +26,7 @@ export function helpCommand(): string {
     - rm [options]: removes a file/directory/shortcut
     - tpp [filename]: opens the file in the Text++ app
     - lua [filename]: evaluates the Lua file
+    - md [filename]: opens the file in the Markdownly app
     [Standard Lua commands also included]
     - readline (Lua command): gets input from the command line (should be awaited with :await())\n
     Upcoming:

@@ -11,7 +11,7 @@ export type MarkdownlyProps = {
     name?: string;
     location?: string;
     content?: string;
-}
+};
 
 const props = defineProps<MarkdownlyProps>();
 
@@ -78,19 +78,21 @@ function createFileInTPP() {
     padding: 10px 20px;
     background-color: var(--md-sys-color-surface-container);
     width: 100%;
+    height: fit-content;
     box-sizing: border-box;
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: flex-start;
     gap: 10px;
+    flex-shrink: 0;
 }
 
 .md-preview {
     width: 100%;
-    height: 100%;
-    padding: 20px;
     box-sizing: border-box;
     background-color: transparent;
+    flex-grow: 1;
+    overflow-y: auto;
 }
 </style>

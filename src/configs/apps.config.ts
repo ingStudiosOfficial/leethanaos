@@ -44,4 +44,10 @@ export const appRegistry: AppConfig[] = [
         icon: '/icons/markdownly_icon.png',
         component: markRaw(defineAsyncComponent(() => import('../components/apps/MarkdownlyApp.vue'))),
     },
+    {
+        id: 'turtpdf',
+        name: 'TurtPDF',
+        icon: '/icons/turtpdf_icon.png',
+        component: markRaw(defineAsyncComponent(() => import('../components/apps/TurtPDFApp.vue'))),
+    },
 ];

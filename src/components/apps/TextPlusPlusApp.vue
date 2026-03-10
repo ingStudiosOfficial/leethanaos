@@ -141,7 +141,6 @@ async function triggerSaveFromDialog() {
     box-sizing: border-box;
     width: 100%;
     height: 100%;
-    font-family: 'Google Sans Code';
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -152,12 +151,14 @@ async function triggerSaveFromDialog() {
     padding: 10px 20px;
     background-color: var(--md-sys-color-surface-container);
     width: 100%;
+    height: fit-content;
     box-sizing: border-box;
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: flex-start;
     gap: 10px;
+    flex-shrink: 0;
 }
 
 .editable-area {
@@ -170,6 +171,8 @@ async function triggerSaveFromDialog() {
     outline: none;
     font-size: 1.2rem;
     color: var(--md-sys-color-on-surface);
+    flex-grow: 1;
+    overflow-y: auto;
 }
 
 .textarea-wrapper {
