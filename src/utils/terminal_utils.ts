@@ -127,7 +127,9 @@ export async function parseCommand(
 			if (!parentNode) throw new Error('cp: target does not exist');
 			if (parentNode.type !== 'directory') throw new Error('cp: target is not a directory');
 
-			const sourceFile = fileSystemStore.getNode(sourceFileName);
+			const sourceFile = fileSystemStore.getNode(
+				`${currentDir}/${sourceFileName}`.replace(/\/+/g, '/'),
+			);
 
 			if (!parentNode.children) parentNode.children = {};
 			if (parentNode.children[destinationFileName])
@@ -148,6 +150,10 @@ export async function parseCommand(
 			await fileSystemStore.persist();
 
 			return '';
+		}
+
+		case 'cat': {
+			return hooks.getFileContent(params.map(String)) || '';
 		}
 	}
 
