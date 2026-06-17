@@ -1,5 +1,5 @@
 export function helpCommand(): string {
-    const helpInfo = `[leethanaOS v1.0.0]\n
+	const helpInfo = `[leethanaOS v1.0.0]\n
     --- HELP ---\n
     About:
     leethanaOS is a web based portfolio operatins simulator I made in Vue.js.
@@ -27,11 +27,12 @@ export function helpCommand(): string {
     - tpp [filename]: opens the file in the Text++ app
     - lua [filename]: evaluates the Lua file
     - md [filename]: opens the file in the Markdownly app
+    - cp [source] [destination]: copies the source file into the destination file
     [Standard Lua commands also included]
     - readline (Lua command): gets input from the command line (should be awaited with :await())\n
     Upcoming:
     - A GUI file explorer
     - A proxied browser (iframe + Go web proxy)`;
 
-    return helpInfo;
+	return helpInfo;
 }

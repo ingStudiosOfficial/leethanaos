@@ -8,10 +8,10 @@ import type { TextPPProps } from './TextPlusPlusApp.vue';
 import type { MarkdownlyProps } from './MarkdownlyApp.vue';
 
 interface TerminalHistory {
-    command: string;
-    output: string;
-    directory: string;
-    key: string;
+	command: string;
+	output: string;
+	directory: string;
+	key: string;
 }
 
 const processManagerStore = useProcessManager();
@@ -25,333 +25,375 @@ const currentOutput = ref<string>('');
 const history = reactive<TerminalHistory[]>([]);
 const luaVersion = ref<string>('');
 const activeProcess = ref<{
-    send: (input: string) => void;
-    stop: () => void;
+	send: (input: string) => void;
+	stop: () => void;
 } | null>(null);
 const cursorPos = ref<number>(0);
 
 let currentCommandIndex = history.length;
 
 function focusInput() {
-    inputRef.value?.focus();
+	inputRef.value?.focus();
 }
 
 function updateCursor() {
-    if (!inputRef.value) return;
-    cursorPos.value = inputRef.value.selectionStart || 0;
+	if (!inputRef.value) return;
+	cursorPos.value = inputRef.value.selectionStart || 0;
 }
 
 async function onCommandSend(event: KeyboardEvent) {
-    if (event.key === 'Enter' && !event.shiftKey && inputFocused) {
-        event.preventDefault();
-        
-        const input = commandText.value;
-        if (!input && !activeProcess.value) return;
+	if (event.key === 'Enter' && !event.shiftKey && inputFocused) {
+		event.preventDefault();
 
-        const historyKey = window.crypto.randomUUID();
+		const input = commandText.value;
+		if (!input && !activeProcess.value) return;
 
-        if (activeProcess.value) {
-            const lastHistory = history[history.length - 1];
-            const item = history.find(h => h.key === historyKey);
-            if (lastHistory) {
-                lastHistory.output += `${(item?.output ? '\n' : '')}${input}`;
-            }
-            activeProcess.value.send(input);
-            commandText.value = '';
-            return;
-        }
+		const historyKey = window.crypto.randomUUID();
 
-        history.push({ 
-            command: input, 
-            output: '', 
-            directory: currentDir.value, 
-            key: historyKey 
-        });
+		if (activeProcess.value) {
+			const lastHistory = history[history.length - 1];
+			const item = history.find((h) => h.key === historyKey);
+			if (lastHistory) {
+				lastHistory.output += `${item?.output ? '\n' : ''}${input}`;
+			}
+			activeProcess.value.send(input);
+			commandText.value = '';
+			return;
+		}
 
-        const regex = /[^\s"']+|"([^"]*)"|'([^']*)'/g;
-        const matches = [];
-        let match;
-        while ((match = regex.exec(input)) !== null) {
-            matches.push(match[1] || match[2] || match[0]);
-        }
+		history.push({
+			command: input,
+			output: '',
+			directory: currentDir.value,
+			key: historyKey,
+		});
 
-        const command = matches[0];
-        const params = matches.slice(1);
+		const regex = /[^\s"']+|"([^"]*)"|'([^']*)'/g;
+		const matches = [];
+		let match;
+		while ((match = regex.exec(input)) !== null) {
+			matches.push(match[1] || match[2] || match[0]);
+		}
 
-        if (!command) {
-            history[history.length - 1]!.output = 'Command not found';
-            commandText.value = '';
-            return;
-        }
+		const command = matches[0];
+		const params = matches.slice(1);
 
-        commandText.value = '';
+		if (!command) {
+			history[history.length - 1]!.output = 'Command not found';
+			commandText.value = '';
+			return;
+		}
 
-        try {
-            const finalResult = await parseCommand(command, input, params, {
-                onOutput: (text) => {
-                    const item = history.find(h => h.key === historyKey);
-                    if (item) {
-                        item.output += (item.output ? '\n' : '') + text;
-                    }
-                },
-                onProcessStart: (proc) => {
-                    activeProcess.value = proc;
-                },
-                clearHistory: () => {
-                    history.length = 0;
-                },
-                changeDirectory: (dir) => {
-                    let dirToChange = currentDir.value;
+		commandText.value = '';
 
-                    switch (dir) {
-                        case '.': {
-                            dirToChange = currentDir.value;
-                            break;
-                        }
+		try {
+			const finalResult = await parseCommand(command, input, params, {
+				onOutput: (text) => {
+					const item = history.find((h) => h.key === historyKey);
+					if (item) {
+						item.output += (item.output ? '\n' : '') + text;
+					}
+				},
+				onProcessStart: (proc) => {
+					activeProcess.value = proc;
+				},
+				clearHistory: () => {
+					history.length = 0;
+				},
+				changeDirectory: (dir) => {
+					let dirToChange = currentDir.value;
 
-                        case '..': {
-                            const filePathArray = currentDir.value.split('/');
-                            dirToChange = `/${filePathArray[filePathArray.length - 2]}` || '/';
-                            break;
-                        }
+					switch (dir) {
+						case '.': {
+							dirToChange = currentDir.value;
+							break;
+						}
 
-                        default: {
-                            const filePathArray = currentDir.value.split('/');
-                            filePathArray.push(dir);
-                            dirToChange = filePathArray.join('/');
-                            break;
-                        }
-                    }
+						case '..': {
+							const filePathArray = currentDir.value.split('/');
+							dirToChange = `/${filePathArray[filePathArray.length - 2]}` || '/';
+							break;
+						}
 
-                    if (!fileSystemStore.getNode(dirToChange)) {
-                        return 'No such file or directory'
-                    }
+						default: {
+							const filePathArray = currentDir.value.split('/');
+							filePathArray.push(dir);
+							dirToChange = filePathArray.join('/');
+							break;
+						}
+					}
 
-                    currentDir.value = dirToChange.replace(/\/+/g, '/');
-                },
-                listDirectory: (params) => {
-                    return fileSystemStore.listDirectory(currentDir.value, params);
-                },
-                makeDirectory: async (params) => {
-                    try {
-                        await fileSystemStore.makeDir(currentDir.value, params);
-                    } catch (error) {
-                        if (error instanceof Error) return error.message;
-                        else if (typeof error === 'string') return error;
-                    }
-                },
-                removeDirectory: async (params) => {
-                    if (params.length === 0) return 'Missing operand';
+					if (!fileSystemStore.getNode(dirToChange)) {
+						return 'No such file or directory';
+					}
 
-                    try {
-                        await fileSystemStore.removeDir(currentDir.value, params);
-                    } catch (error) {
-                        if (error instanceof Error) return error.message;
-                        else if (typeof error === 'string') return error;
-                    }
-                },
-                createFile: async (params) => {
-                    if (params.length === 0) return 'touch: Missing file operand';
+					currentDir.value = dirToChange.replace(/\/+/g, '/');
+				},
+				listDirectory: (params) => {
+					return fileSystemStore.listDirectory(currentDir.value, params);
+				},
+				makeDirectory: async (params) => {
+					try {
+						await fileSystemStore.makeDir(currentDir.value, params);
+					} catch (error) {
+						if (error instanceof Error) return error.message;
+						else if (typeof error === 'string') return error;
+					}
+				},
+				removeDirectory: async (params) => {
+					if (params.length === 0) return 'Missing operand';
 
-                    try {
-                        await fileSystemStore.makeFile(currentDir.value, params);
-                    } catch (error) {
-                        if (error instanceof Error) return error.message;
-                        else if (typeof error === 'string') return error;
-                    }
-                },
-                rmNode: async (params) => {
-                    if (params.length === 0) return 'Missing operand';
+					try {
+						await fileSystemStore.removeDir(currentDir.value, params);
+					} catch (error) {
+						if (error instanceof Error) return error.message;
+						else if (typeof error === 'string') return error;
+					}
+				},
+				createFile: async (params) => {
+					if (params.length === 0) return 'touch: Missing file operand';
 
-                    try {
-                        await fileSystemStore.removeNode(currentDir.value, params);
-                    } catch (error) {
-                        if (error instanceof Error) return error.message;
-                        else if (typeof error === 'string') return error;
-                    }
-                },
-                openTPP: (params) => {
-                    const tppAppConfig = appRegistry.find(a => a.id === 'text_plus_plus');
-                    if (!tppAppConfig) return 'Could not locate the TextPlusPlus app config';
+					try {
+						await fileSystemStore.makeFile(currentDir.value, params);
+					} catch (error) {
+						if (error instanceof Error) return error.message;
+						else if (typeof error === 'string') return error;
+					}
+				},
+				rmNode: async (params) => {
+					if (params.length === 0) return 'Missing operand';
 
-                    if (params.length === 0 || !params[0]) {
-                        processManagerStore.openApp(tppAppConfig, {
-                            hasExisting: false,
-                        } as TextPPProps);
-                        return;
-                    }
+					try {
+						await fileSystemStore.removeNode(currentDir.value, params);
+					} catch (error) {
+						if (error instanceof Error) return error.message;
+						else if (typeof error === 'string') return error;
+					}
+				},
+				openTPP: (params) => {
+					const tppAppConfig = appRegistry.find((a) => a.id === 'text_plus_plus');
+					if (!tppAppConfig) return 'Could not locate the TextPlusPlus app config';
 
-                    const fileToOpen = fileSystemStore.getNode(`${currentDir.value}/${params[0]}`.replace(/\/+/g, '/'));
-                    if (!fileToOpen) return 'File does not exist';
+					if (params.length === 0 || !params[0]) {
+						processManagerStore.openApp(tppAppConfig, {
+							hasExisting: false,
+						} as TextPPProps);
+						return;
+					}
 
-                    processManagerStore.openApp(tppAppConfig, {
-                        hasExisting: true,
-                        name: fileToOpen.name,
-                        path: fileToOpen.location.split('/').slice(0, -1).join('/'),
-                        content: fileToOpen.content,
-                    } as TextPPProps);
-                },
-                getFileContent: (params) => {
-                    const fileToOpen = fileSystemStore.getNode(`${currentDir.value}/${params[0]}`.replace(/\/+/g, '/'));
-                    if (!fileToOpen) return null;
+					const fileToOpen = fileSystemStore.getNode(
+						`${currentDir.value}/${params[0]}`.replace(/\/+/g, '/'),
+					);
+					if (!fileToOpen) return 'File does not exist';
 
-                    const content = fileToOpen.content;
-                    if (!content) return null;
+					processManagerStore.openApp(tppAppConfig, {
+						hasExisting: true,
+						name: fileToOpen.name,
+						path: fileToOpen.location.split('/').slice(0, -1).join('/'),
+						content: fileToOpen.content,
+					} as TextPPProps);
+				},
+				getFileContent: (params) => {
+					const fileToOpen = fileSystemStore.getNode(
+						`${currentDir.value}/${params[0]}`.replace(/\/+/g, '/'),
+					);
+					if (!fileToOpen) return null;
 
-                    return content;
-                },
-                openMd: (params) => {
-                    const markdownlyAppConfig = appRegistry.find(a => a.id === 'markdownly');
-                    if (!markdownlyAppConfig) return 'Could not locate the Markdownly app config';
+					const content = fileToOpen.content;
+					if (!content) return null;
 
-                    if (params.length === 0 || !params[0]) {
-                        processManagerStore.openApp(markdownlyAppConfig, {
-                            content: '',
-                        } as MarkdownlyProps);
-                        return;
-                    }
+					return content;
+				},
+				openMd: (params) => {
+					const markdownlyAppConfig = appRegistry.find((a) => a.id === 'markdownly');
+					if (!markdownlyAppConfig) return 'Could not locate the Markdownly app config';
 
-                    const fileToOpen = fileSystemStore.getNode(`${currentDir.value}/${params[0]}`.replace(/\/+/g, '/'));
-                    if (!fileToOpen) return 'File does not exist';
+					if (params.length === 0 || !params[0]) {
+						processManagerStore.openApp(markdownlyAppConfig, {
+							content: '',
+						} as MarkdownlyProps);
+						return;
+					}
 
-                    processManagerStore.openApp(markdownlyAppConfig, {
-                        name: fileToOpen.name,
-                        location: fileToOpen.location,
-                        content: fileToOpen.content,
-                    } as MarkdownlyProps);
-                }
-            });
+					const fileToOpen = fileSystemStore.getNode(
+						`${currentDir.value}/${params[0]}`.replace(/\/+/g, '/'),
+					);
+					if (!fileToOpen) return 'File does not exist';
 
-            if (finalResult) {
-                const item = history.find(h => h.key === historyKey);
-                if (item && !item.output.includes(finalResult)) {
-                    item.output += (item.output ? '\n' : '') + finalResult;
-                }
-            }
-        } catch (err) {
-            const item = history.find(h => h.key === historyKey);
-            if (item) item.output += `Error: ${err}`;
-        } finally {
-            activeProcess.value = null;
-        }
-    }
+					processManagerStore.openApp(markdownlyAppConfig, {
+						name: fileToOpen.name,
+						location: fileToOpen.location,
+						content: fileToOpen.content,
+					} as MarkdownlyProps);
+				},
+				getFileSystemStore: () => {
+					return fileSystemStore;
+				},
+				getCurrentDir: () => {
+					return currentDir.value;
+				},
+			});
+
+			if (finalResult) {
+				const item = history.find((h) => h.key === historyKey);
+				if (item && !item.output.includes(finalResult)) {
+					item.output += (item.output ? '\n' : '') + finalResult;
+				}
+			}
+		} catch (err) {
+			const item = history.find((h) => h.key === historyKey);
+			if (item) item.output += `Error: ${err}`;
+		} finally {
+			activeProcess.value = null;
+		}
+	}
 }
 
 function onArrowKey(event: KeyboardEvent) {
-    if (event.key === 'ArrowUp') {
-        currentCommandIndex = (currentCommandIndex - 1 + history.length) % history.length;
-    } else if (event.key === 'ArrowDown') {
-        currentCommandIndex = (currentCommandIndex + 1) % history.length;
-    }
+	if (event.key === 'ArrowUp') {
+		currentCommandIndex = (currentCommandIndex - 1 + history.length) % history.length;
+	} else if (event.key === 'ArrowDown') {
+		currentCommandIndex = (currentCommandIndex + 1) % history.length;
+	}
 
-    console.log(currentCommandIndex);
-    console.log(history.length);
+	console.log(currentCommandIndex);
+	console.log(history.length);
 
-    const commandSelected = history.map(h => h.command)[currentCommandIndex];
-    if (!commandSelected) {
-        commandText.value = '';
-        return;
-    }
+	const commandSelected = history.map((h) => h.command)[currentCommandIndex];
+	if (!commandSelected) {
+		commandText.value = '';
+		return;
+	}
 
-    commandText.value = commandSelected;
+	commandText.value = commandSelected;
 }
 
 onMounted(async () => {
-    focusInput();
-    currentCommandIndex = history.length;
-    luaVersion.value = await getLuaVersion();
+	focusInput();
+	currentCommandIndex = history.length;
+	luaVersion.value = await getLuaVersion();
 });
 </script>
 
 <template>
-    <div class="app-wrapper" @click="focusInput">
-        <p>leethanaOS [Version 1.0.0, {{ luaVersion }}] [type 'help' for help]</p>
-        <p>© 2026 (ing) Studios</p>
-        
-        <div v-for="item in history" :key="item.key" class="history">
-            <div class="command-line">
-                <span class="prompt">
-                    <span class="user-text">leethana@web</span>: <span class="current-dir">{{ item.directory === '/home' ? '~' : item.directory }}</span> >
-                </span>
-                <span class="display-text">{{ item.command }}</span>
-            </div>
-            <p class="output">{{ item.output }}</p>
-        </div>
+	<div class="app-wrapper" @click="focusInput">
+		<p>leethanaOS [Version 1.0.0, {{ luaVersion }}] [type 'help' for help]</p>
+		<p>© 2026 (ing) Studios</p>
 
-        <div class="command-row">
-            <div class="command-line">
-                <span v-if="!activeProcess" class="prompt">
-                    <span class="user-text">leethana@web</span>: <span class="current-dir">{{ currentDir === '/home' ? '~' : currentDir }}</span> >
-                </span>
-                <span class="display-text">{{ commandText.slice(0, cursorPos) }}<span v-show="inputFocused" class="cursor"></span>{{ commandText.slice(cursorPos) }}</span>
-            </div>
-            <p class="output">{{ currentOutput }}</p>
-        </div>
+		<div v-for="item in history" :key="item.key" class="history">
+			<div class="command-line">
+				<span class="prompt">
+					<span class="user-text">leethana@web</span>:<span class="current-dir">{{
+						item.directory === '/home' ? '~' : item.directory
+					}}</span
+					>$
+				</span>
+				<span class="display-text">{{ item.command }}</span>
+			</div>
+			<p class="output">{{ item.output }}</p>
+		</div>
 
-        <textarea ref="inputRef" v-model="commandText" class="hidden-terminal-input" autofocus spellcheck="false" autocomplete="off" @focus="inputFocused = true" @blur="inputFocused = false" @keydown.enter="onCommandSend" @keydown.up.prevent="onArrowKey" @keydown.down.prevent="onArrowKey" @input="updateCursor()" @keyup="updateCursor()" @click="updateCursor()" />
-    </div>
+		<div class="command-row">
+			<div class="command-line">
+				<span v-if="!activeProcess" class="prompt">
+					<span class="user-text">leethana@web</span>:<span class="current-dir">{{
+						currentDir === '/home' ? '~' : currentDir
+					}}</span
+					>$
+				</span>
+				<span class="display-text"
+					>{{ commandText.slice(0, cursorPos)
+					}}<span v-show="inputFocused" class="cursor"></span
+					>{{ commandText.slice(cursorPos) }}</span
+				>
+			</div>
+			<p class="output">{{ currentOutput }}</p>
+		</div>
+
+		<textarea
+			ref="inputRef"
+			v-model="commandText"
+			class="hidden-terminal-input"
+			autofocus
+			spellcheck="false"
+			autocomplete="off"
+			@focus="inputFocused = true"
+			@blur="inputFocused = false"
+			@keydown.enter="onCommandSend"
+			@keydown.up.prevent="onArrowKey"
+			@keydown.down.prevent="onArrowKey"
+			@input="updateCursor()"
+			@keyup="updateCursor()"
+			@click="updateCursor()"
+		/>
+	</div>
 </template>
 
 <style scoped>
 .app-wrapper {
-    box-sizing: border-box;
-    padding: 20px;
-    font-family: 'Google Sans Code';
-    background-color: #000000;
-    color: #ffffff;
-    width: 100%;
-    min-height: 100%;
-    font-size: 1rem;
-    position: relative;
+	box-sizing: border-box;
+	padding: 20px;
+	font-family: 'Google Sans Code';
+	background-color: #000000;
+	color: #ffffff;
+	width: 100%;
+	min-height: 100%;
+	font-size: 1rem;
+	position: relative;
 }
 
 .command-line {
-    display: block; 
-    word-break: break-all;
-    line-height: 1.5;
-    white-space: normal;
+	display: block;
+	word-break: break-all;
+	line-height: 1.5;
+	white-space: normal;
 }
 
 .display-text {
-    white-space: pre-wrap; 
-    word-break: break-all;
-    color: #ffffff;
-    display: inline; 
+	white-space: pre-wrap;
+	word-break: break-all;
+	color: #ffffff;
+	display: inline;
 }
 
 .hidden-terminal-input {
-    position: fixed;
-    top: -100px;
-    left: 0;
-    opacity: 0;
-    pointer-events: none;
-    z-index: -1;
+	position: fixed;
+	top: -100px;
+	left: 0;
+	opacity: 0;
+	pointer-events: none;
+	z-index: -1;
 }
 
 .cursor {
-    display: inline-block;
-    width: 8px;
-    height: 1.2rem;
-    background-color: #ffffff;
-    margin-left: 2px;
-    vertical-align: text-bottom;
-    animation: blink 1s step-end infinite;
+	display: inline-block;
+	width: 8px;
+	height: 1.2rem;
+	background-color: #ffffff;
+	margin-left: 2px;
+	vertical-align: text-bottom;
+	animation: blink 1s step-end infinite;
 }
 
 @keyframes blink {
-    from, to { background-color: transparent; }
-    50% { background-color: #ffffff; }
+	from,
+	to {
+		background-color: transparent;
+	}
+	50% {
+		background-color: #ffffff;
+	}
 }
 
 .user-text {
-    color: var(--md-sys-color-secondary);
+	color: var(--md-sys-color-secondary);
 }
 
 .current-dir {
-    color: var(--md-sys-color-primary);
+	color: var(--md-sys-color-primary);
 }
 
 .output {
-    white-space: pre-line;
+	white-space: pre-line;
 }
 </style>

@@ -1,53 +1,63 @@
-import { defineAsyncComponent, markRaw, type Component } from "vue";
+import { defineAsyncComponent, markRaw, type Component } from 'vue';
 
 export interface AppConfig {
-    id: string;
-    name: string;
-    icon: string;
-    component: Component;
+	id: string;
+	name: string;
+	icon: string;
+	component: Component;
 }
 
 export const appRegistry: AppConfig[] = [
-    {
-        id: 'hello_world',
-        name: '.hello_world',
-        icon: '/icons/hello_world_icon.png',
-        component: markRaw(defineAsyncComponent(() => import('../components/apps/HelloWorldApp.vue'))),
-    },
-    {
-        id: 'about_me',
-        name: 'About Me',
-        icon: '/icons/about_me_icon.png',
-        component: markRaw(defineAsyncComponent(() => import('../components/apps/AboutMeApp.vue'))),
-    },
-    {
-        id: 'tech_stack',
-        name: 'Tech Stack',
-        icon: '/icons/tech_stack_icon.png',
-        component: markRaw(defineAsyncComponent(() => import('../components/apps/TechStackApp.vue'))),
-    },
-    {
-        id: 'terminal',
-        name: 'Terminal',
-        icon: '/icons/terminal_icon.png',
-        component: markRaw(defineAsyncComponent(() => import('../components/apps/TerminalApp.vue'))),
-    },
-    {
-        id: 'text_plus_plus',
-        name: 'Text++',
-        icon: '/icons/text_plus_plus_icon.png',
-        component: markRaw(defineAsyncComponent(() => import('../components/apps/TextPlusPlusApp.vue'))),
-    },
-    {
-        id: 'markdownly',
-        name: 'Markdownly',
-        icon: '/icons/markdownly_icon.png',
-        component: markRaw(defineAsyncComponent(() => import('../components/apps/MarkdownlyApp.vue'))),
-    },
-    {
-        id: 'turtpdf',
-        name: 'TurtPDF',
-        icon: '/icons/turtpdf_icon.png',
-        component: markRaw(defineAsyncComponent(() => import('../components/apps/TurtPDFApp.vue'))),
-    },
+	{
+		id: 'hello_world',
+		name: '.hello_world',
+		icon: '/icons/hello_world_icon.png',
+		component: markRaw(
+			defineAsyncComponent(() => import('../components/apps/HelloWorldApp.vue')),
+		),
+	},
+	{
+		id: 'about_me',
+		name: 'About Me',
+		icon: '/icons/about_me_icon.png',
+		component: markRaw(defineAsyncComponent(() => import('../components/apps/AboutMeApp.vue'))),
+	},
+	{
+		id: 'tech_stack',
+		name: 'Tech Stack',
+		icon: '/icons/tech_stack_icon.png',
+		component: markRaw(
+			defineAsyncComponent(() => import('../components/apps/TechStackApp.vue')),
+		),
+	},
+	{
+		id: 'terminal',
+		name: 'Terminal',
+		icon: '/icons/terminal_icon.png',
+		component: markRaw(
+			defineAsyncComponent(() => import('../components/apps/TerminalApp.vue')),
+		),
+	},
+	{
+		id: 'text_plus_plus',
+		name: 'Text++',
+		icon: '/icons/text_plus_plus_icon.png',
+		component: markRaw(
+			defineAsyncComponent(() => import('../components/apps/TextPlusPlusApp.vue')),
+		),
+	},
+	{
+		id: 'markdownly',
+		name: 'Markdownly',
+		icon: '/icons/markdownly_icon.png',
+		component: markRaw(
+			defineAsyncComponent(() => import('../components/apps/MarkdownlyApp.vue')),
+		),
+	},
+	{
+		id: 'turtpdf',
+		name: 'TurtPDF',
+		icon: '/icons/turtpdf_icon.png',
+		component: markRaw(defineAsyncComponent(() => import('../components/apps/TurtPDFApp.vue'))),
+	},
 ];
