@@ -124,7 +124,7 @@ export async function parseCommand(
 			const fileSystemStore = hooks.getFileSystemStore();
 
 			const parentNode = fileSystemStore.getNode(currentDir);
-			if (!parentNode) throw new Error('cp: target does not exist');
+			if (!parentNode) return 'cp: target does not exist';
 			if (parentNode.type !== 'directory') throw new Error('cp: target is not a directory');
 
 			const sourceFile = fileSystemStore.getNode(
@@ -133,7 +133,7 @@ export async function parseCommand(
 
 			if (!parentNode.children) parentNode.children = {};
 			if (parentNode.children[destinationFileName])
-				throw new Error(`cp: file '${destinationFileName}' exists`);
+				return `cp: file '${destinationFileName}' exists`;
 
 			const destinationFile = fileSystemStore.createFile(
 				destinationFileName,
@@ -159,7 +159,7 @@ export async function parseCommand(
 
 	const commandFound = availableCommands.find((c) => c.name === command);
 	if (commandFound) {
-		const response = commandFound.function(params);
+		const response = await commandFound.function(params);
 		return response;
 	}
 
