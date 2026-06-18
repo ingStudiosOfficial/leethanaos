@@ -4,13 +4,20 @@ import { UAParser } from 'ua-parser-js';
 
 const parser = new UAParser();
 
+function convertBatteryTime(totalSeconds: number): string {
+	const hours = Math.floor(totalSeconds / 3600);
+	const minutes = Math.floor((totalSeconds % 3600) / 60);
+
+	return `${hours} hours, ${minutes} min remaining`;
+}
+
 export async function turtfetchCommand() {
-	const device = parser.getDevice();
 	const cpu = parser.getCPU();
 	const gpu = GPUDetect.getGPU();
 	const engine = parser.getEngine();
 	const browser = parser.getBrowser();
 	const battery = await (navigator as any).getBattery();
+	console.log('Battery:', battery);
 	const locale = Intl.DateTimeFormat().resolvedOptions().locale;
 
 	const result = `
@@ -32,7 +39,7 @@ Terminal: Terminal 1.1.0
 CPU: ${cpu.architecture}
 GPU: ${gpu.vendor} ${gpu.model}
 Memory: ${(navigator as any).deviceMemory} GiB
-Battery: ${battery * 100}%
+Battery: ${battery.level * 100}%${!battery.charging ? ` (${convertBatteryTime(battery.dischargingTime)})` : ''}${battery.charging && battery.level < 1 ? ` ${convertBatteryTime(battery.chargingTime)}` : ''} [${battery.charging ? 'AC Connected' : 'Discharging'}]
 Locale: ${locale}.UTF-8
 `;
 
