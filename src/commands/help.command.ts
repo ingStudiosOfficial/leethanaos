@@ -28,6 +28,9 @@ export function helpCommand(): string {
     - lua [filename]: evaluates the Lua file
     - md [filename]: opens the file in the Markdownly app
     - cp [source] [destination]: copies the source file into the destination file
+    - turtfetch: displays system information like fastfetch
+    - pdf [filename]: opens the file in the TurtPDF app
+    - upload: opens the upload panel to upload any file into leethanaOS
     [Standard Lua commands also included]
     - readline (Lua command): gets input from the command line (should be awaited with :await())\n
     Upcoming:
