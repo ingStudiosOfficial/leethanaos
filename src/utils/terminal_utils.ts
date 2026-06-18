@@ -19,11 +19,12 @@ interface Hooks {
 	removeDirectory: (params: string[]) => Promise<void | string>;
 	createFile: (params: string[]) => Promise<void | string>;
 	rmNode: (params: string[]) => Promise<void | string>;
-	openTPP: (params: string[]) => void | string;
-	getFileContent: (params: string[]) => string | null;
+	openTPP: (params: string[]) => Promise<void | string>;
+	getFileContent: (params: string[]) => Promise<string | null>;
 	openMd: (params: string[]) => void | string;
 	getFileSystemStore: () => ReturnType<typeof useFileSystem>;
 	getCurrentDir: () => string;
+	openPDF: (params: string[]) => Promise<void | string>;
 }
 
 let luaInstance: LuaEngine | null = null;
@@ -97,7 +98,7 @@ export async function parseCommand(
 		}
 
 		case 'tpp': {
-			const error = hooks.openTPP(params.map(String));
+			const error = await hooks.openTPP(params.map(String));
 			return error || '';
 		}
 
@@ -125,11 +126,13 @@ export async function parseCommand(
 
 			const parentNode = fileSystemStore.getNode(currentDir);
 			if (!parentNode) return 'cp: target does not exist';
-			if (parentNode.type !== 'directory') throw new Error('cp: target is not a directory');
+			if (parentNode.type !== 'directory') return 'cp: target is not a directory';
 
 			const sourceFile = fileSystemStore.getNode(
 				`${currentDir}/${sourceFileName}`.replace(/\/+/g, '/'),
 			);
+
+			if (!sourceFile) return 'cp: could not find source file';
 
 			if (!parentNode.children) parentNode.children = {};
 			if (parentNode.children[destinationFileName])
@@ -138,10 +141,11 @@ export async function parseCommand(
 			const destinationFile = fileSystemStore.createFile(
 				destinationFileName,
 				currentDir,
+				sourceFile.metadata.mimeType,
 				'root',
-				sourceFile?.size,
-				sourceFile?.content,
-				sourceFile?.metadata.permissions,
+				sourceFile.size,
+				sourceFile.content,
+				sourceFile.metadata.permissions,
 			);
 
 			parentNode.children[destinationFileName] = destinationFile;
@@ -153,7 +157,55 @@ export async function parseCommand(
 		}
 
 		case 'cat': {
-			return hooks.getFileContent(params.map(String)) || '';
+			return (await hooks.getFileContent(params.map(String))) || '';
+		}
+
+		case 'upload': {
+			const uploadButton = document.createElement('input');
+			uploadButton.type = 'file';
+			uploadButton.click();
+
+			const fileSystemStore = hooks.getFileSystemStore();
+			const currentDir = hooks.getCurrentDir();
+
+			uploadButton.addEventListener(
+				'change',
+				async () => {
+					const file = uploadButton.files?.[0];
+
+					if (!file) {
+						return 'upload: no file uploaded';
+					}
+
+					const parentNode = fileSystemStore.getNode(currentDir);
+					if (!parentNode) return 'upload: target does not exist';
+					if (parentNode.type !== 'directory') return 'upload: target is not a directory';
+
+					const newFile = fileSystemStore.createFile(
+						file.name,
+						currentDir,
+						file.type,
+						'leethana',
+						file.size,
+						file,
+					);
+
+					if (!parentNode.children) parentNode.children = {};
+					if (parentNode.children[file.name]) return `upload: file '${file.name}' exists`;
+
+					parentNode.children[file.name] = newFile;
+					await fileSystemStore.persist();
+
+					uploadButton.remove();
+				},
+				{ once: true },
+			);
+
+			return '';
+		}
+
+		case 'pdf': {
+			return (await hooks.openPDF(params.map(String))) || '';
 		}
 	}
 
@@ -192,7 +244,7 @@ export async function parseCommand(
 	});
 
 	if (evaluateLuaFromFile) {
-		const fileToEvaluate = hooks.getFileContent(params.map(String));
+		const fileToEvaluate = await hooks.getFileContent(params.map(String));
 		if (!fileToEvaluate) return 'File not found';
 
 		return await luaInstance.doString(fileToEvaluate);

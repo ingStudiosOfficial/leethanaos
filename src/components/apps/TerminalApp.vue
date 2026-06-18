@@ -6,6 +6,7 @@ import { getLuaVersion, parseCommand } from '@/utils/terminal_utils';
 import { onMounted, reactive, ref } from 'vue';
 import type { TextPPProps } from './TextPlusPlusApp.vue';
 import type { MarkdownlyProps } from './MarkdownlyApp.vue';
+import type { TurtPDFProps } from './TurtPDFApp.vue';
 
 interface TerminalHistory {
 	command: string;
@@ -75,7 +76,7 @@ async function onCommandSend(event: KeyboardEvent) {
 			matches.push(match[1] || match[2] || match[0]);
 		}
 
-		const command = matches[0];
+		const command = matches[0] !== 'sudo' ? matches[0] : matches[1];
 		const params = matches.slice(1);
 
 		if (!command) {
@@ -111,7 +112,7 @@ async function onCommandSend(event: KeyboardEvent) {
 
 						case '..': {
 							const filePathArray = currentDir.value.split('/');
-							dirToChange = `/${filePathArray[filePathArray.length - 2]}` || '/';
+							dirToChange = `/${filePathArray[filePathArray.length - 2]}`;
 							break;
 						}
 
@@ -170,9 +171,9 @@ async function onCommandSend(event: KeyboardEvent) {
 						else if (typeof error === 'string') return error;
 					}
 				},
-				openTPP: (params) => {
+				openTPP: async (params) => {
 					const tppAppConfig = appRegistry.find((a) => a.id === 'text_plus_plus');
-					if (!tppAppConfig) return 'Could not locate the TextPlusPlus app config';
+					if (!tppAppConfig) return 'tpp: could not locate the TextPlusPlus app config';
 
 					if (params.length === 0 || !params[0]) {
 						processManagerStore.openApp(tppAppConfig, {
@@ -184,16 +185,16 @@ async function onCommandSend(event: KeyboardEvent) {
 					const fileToOpen = fileSystemStore.getNode(
 						`${currentDir.value}/${params[0]}`.replace(/\/+/g, '/'),
 					);
-					if (!fileToOpen) return 'File does not exist';
+					if (!fileToOpen) return 'tpp: file does not exist';
 
 					processManagerStore.openApp(tppAppConfig, {
 						hasExisting: true,
 						name: fileToOpen.name,
 						path: fileToOpen.location.split('/').slice(0, -1).join('/'),
-						content: fileToOpen.content,
+						content: (await fileToOpen.content?.text()) || '',
 					} as TextPPProps);
 				},
-				getFileContent: (params) => {
+				getFileContent: async (params) => {
 					const fileToOpen = fileSystemStore.getNode(
 						`${currentDir.value}/${params[0]}`.replace(/\/+/g, '/'),
 					);
@@ -202,11 +203,12 @@ async function onCommandSend(event: KeyboardEvent) {
 					const content = fileToOpen.content;
 					if (!content) return null;
 
-					return content;
+					return await content.text();
 				},
 				openMd: (params) => {
 					const markdownlyAppConfig = appRegistry.find((a) => a.id === 'markdownly');
-					if (!markdownlyAppConfig) return 'Could not locate the Markdownly app config';
+					if (!markdownlyAppConfig)
+						return 'markdownly: could not locate the Markdownly app config';
 
 					if (params.length === 0 || !params[0]) {
 						processManagerStore.openApp(markdownlyAppConfig, {
@@ -218,7 +220,7 @@ async function onCommandSend(event: KeyboardEvent) {
 					const fileToOpen = fileSystemStore.getNode(
 						`${currentDir.value}/${params[0]}`.replace(/\/+/g, '/'),
 					);
-					if (!fileToOpen) return 'File does not exist';
+					if (!fileToOpen) return 'markdonly: file does not exist';
 
 					processManagerStore.openApp(markdownlyAppConfig, {
 						name: fileToOpen.name,
@@ -231,6 +233,26 @@ async function onCommandSend(event: KeyboardEvent) {
 				},
 				getCurrentDir: () => {
 					return currentDir.value;
+				},
+				openPDF: async (params) => {
+					const pdfAppConfig = appRegistry.find((a) => a.id === 'turtpdf');
+					if (!pdfAppConfig) return 'turtpdf: could not locate the TurtPDF app config';
+
+					if (params.length === 0 || !params[0]) {
+						processManagerStore.openApp(pdfAppConfig, {} as TurtPDFProps);
+						return;
+					}
+
+					const fileToOpen = fileSystemStore.getNode(
+						`${currentDir.value}/${params[0]}`.replace(/\/+/g, '/'),
+					);
+					if (!fileToOpen?.content) return 'turtpdf: file does not exist';
+
+					processManagerStore.openApp(pdfAppConfig, {
+						name: fileToOpen.name,
+						location: fileToOpen.location.split('/').slice(0, -1).join('/'),
+						content: new Uint8Array(await fileToOpen.content.arrayBuffer()),
+					} as TurtPDFProps);
 				},
 			});
 

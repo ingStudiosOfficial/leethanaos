@@ -16,7 +16,10 @@ export async function turtfetchCommand() {
 	const gpu = GPUDetect.getGPU();
 	const engine = parser.getEngine();
 	const browser = parser.getBrowser();
-	const battery = await (navigator as any).getBattery();
+	let battery: any = null;
+	if ('getBattery' in navigator) {
+		battery = await (navigator as any).getBattery();
+	}
 	console.log('Battery:', battery);
 	const locale = Intl.DateTimeFormat().resolvedOptions().locale;
 
@@ -38,8 +41,8 @@ Cursor: System Default
 Terminal: Terminal 1.1.0
 CPU: ${cpu.architecture}
 GPU: ${gpu.vendor} ${gpu.model}
-Memory: ${(navigator as any).deviceMemory} GiB
-Battery: ${battery.level * 100}%${!battery.charging ? ` (${convertBatteryTime(battery.dischargingTime)})` : ''}${battery.charging && battery.level < 1 ? ` ${convertBatteryTime(battery.chargingTime)}` : ''} [${battery.charging ? 'AC Connected' : 'Discharging'}]
+Memory: ${(navigator as any).deviceMemory !== undefined ? `${(navigator as any).deviceMemory} GiB` : 'unknown'}
+Battery: ${battery !== null ? `${battery.level * 100}%${!battery.charging ? ` (${convertBatteryTime(battery.dischargingTime)})` : ''}${battery.charging && battery.level < 1 ? ` ${convertBatteryTime(battery.chargingTime)}` : ''} [${battery.charging ? 'AC Connected' : 'Discharging'}]` : 'unknown'}
 Locale: ${locale}.UTF-8
 `;
 

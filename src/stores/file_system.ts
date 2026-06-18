@@ -1,6 +1,7 @@
 import { getDb } from '@/db';
 import { defineStore } from 'pinia';
 import { reactive, ref, toRaw } from 'vue';
+import mime from 'mime';
 
 export type EntryType = 'file' | 'directory' | 'link';
 
@@ -9,18 +10,17 @@ export interface FileSystemNode {
 	type: EntryType;
 	size: number;
 	location: string;
-	content?: string;
+	content?: Blob;
 	children?: Record<string, FileSystemNode>;
 	metadata: {
 		permissions: string;
 		owner: string;
 		createdAt: number;
 		modifiedAt: number;
-		thumbnail?: string;
+		mimeType: string;
+		thumbnail?: Blob;
 	};
 }
-
-const storageKey = import.meta.env.VITE_FS_STORAGE_KEY;
 
 export const useFileSystem = defineStore('fileSystem', () => {
 	const drive = reactive<Record<string, FileSystemNode>>({});
@@ -50,6 +50,7 @@ export const useFileSystem = defineStore('fileSystem', () => {
 					owner: 'root',
 					createdAt: Date.now(),
 					modifiedAt: Date.now(),
+					mimeType: 'inode/directory',
 				},
 				children: {
 					bin: createDir('bin', '/bin'),
@@ -78,8 +79,8 @@ export const useFileSystem = defineStore('fileSystem', () => {
 		initialized.value = true;
 	}
 
-	function getFileSize(content: string): number {
-		const size = new Blob([content]).size;
+	function getFileSize(content: Blob): number {
+		const size = content.size;
 		return size;
 	}
 
@@ -102,6 +103,7 @@ export const useFileSystem = defineStore('fileSystem', () => {
 				owner,
 				createdAt: Date.now(),
 				modifiedAt: Date.now(),
+				mimeType: 'inode/directory',
 			},
 		};
 
@@ -111,9 +113,10 @@ export const useFileSystem = defineStore('fileSystem', () => {
 	function createFile(
 		name: string,
 		path: string,
+		mimeType: string,
 		owner = 'root',
 		size: number = 0,
-		content: string = '',
+		content: Blob = new Blob(),
 		permissions: string = '755',
 	): FileSystemNode {
 		const node: FileSystemNode = {
@@ -127,6 +130,7 @@ export const useFileSystem = defineStore('fileSystem', () => {
 				owner,
 				createdAt: Date.now(),
 				modifiedAt: Date.now(),
+				mimeType: mimeType,
 			},
 		};
 
@@ -215,8 +219,15 @@ export const useFileSystem = defineStore('fileSystem', () => {
 				if (!parentNode.children) parentNode.children = {};
 				if (parentNode.children[name]) throw new Error(`'${name}': File exists`);
 
+				const mimeType = mime.getType(name);
+
 				const newPath = parentPath === '/' ? `/${name}` : `${parentPath}/${name}`;
-				parentNode.children[name] = createFile(name, newPath, 'leethana');
+				parentNode.children[name] = createFile(
+					name,
+					newPath,
+					mimeType || 'text/plain',
+					'leethana',
+				);
 
 				changed = true;
 			} catch (error) {
@@ -301,7 +312,8 @@ export const useFileSystem = defineStore('fileSystem', () => {
 	async function editFile(
 		parentPath: string,
 		fileName: string,
-		content: string,
+		content: Blob,
+		mimeType: string,
 		allowCreateFile: boolean,
 	) {
 		const filePath = `${parentPath}/${fileName}`.replace(/\/+/g, '/');
@@ -322,6 +334,7 @@ export const useFileSystem = defineStore('fileSystem', () => {
 			const newFile = createFile(
 				fileName!,
 				filePath,
+				mimeType,
 				'leethana',
 				getFileSize(content),
 				content,
