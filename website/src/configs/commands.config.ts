@@ -1,4 +1,5 @@
 import { compgenCommand } from '@/commands/compgen.command';
+import { curlCommand } from '@/commands/curl.command';
 import { echoCommand } from '@/commands/echo.command';
 import { helpCommand } from '@/commands/help.command';
 import { openUrlCommand } from '@/commands/open_url.command';
@@ -34,5 +35,9 @@ export const availableCommands: Command[] = [
 	{
 		name: 'turtfetch',
 		function: turtfetchCommand,
+	},
+	{
+		name: 'curl',
+		function: curlCommand,
 	},
 ];

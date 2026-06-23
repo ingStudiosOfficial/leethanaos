@@ -9,7 +9,7 @@ import '@material/web/menu/menu-item.js';
 import '@material/web/button/outlined-button.js';
 import { type FileSystemNode, useFileSystem } from '@/stores/file_system';
 import DirectoryMenuItem from '../DirectoryMenuItem.vue';
-import { ref, toRaw, useTemplateRef } from 'vue';
+import { onMounted, onUnmounted, ref, toRaw, useTemplateRef } from 'vue';
 import { MdDialog } from '@material/web/dialog/dialog.js';
 import type { MdMenu } from '@material/web/menu/menu.js';
 
@@ -111,6 +111,23 @@ async function triggerSaveFromDialog() {
 		saveError.value = error as string;
 	}
 }
+
+function onKey(event: KeyboardEvent) {
+	if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
+		event.preventDefault();
+		save();
+	}
+}
+
+onMounted(() => {
+	console.log('TPP app mounted.');
+	document.addEventListener('keydown', onKey);
+});
+
+onUnmounted(() => {
+	console.log('TPP app unmounted.');
+	document.removeEventListener('keydown', onKey);
+});
 </script>
 
 <template>

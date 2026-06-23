@@ -345,7 +345,7 @@ onMounted(async () => {
 			@keydown.up.prevent="onArrowKey"
 			@keydown.down.prevent="onArrowKey"
 			@input="updateCursor()"
-			@keyup="updateCursor()"
+			@keydown="updateCursor()"
 			@click="updateCursor()"
 		/>
 	</div>
