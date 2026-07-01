@@ -60,4 +60,10 @@ export const appRegistry: AppConfig[] = [
 		icon: '/icons/turtpdf_icon.png',
 		component: markRaw(defineAsyncComponent(() => import('../components/apps/TurtPDFApp.vue'))),
 	},
+	{
+		id: 'school',
+		name: 'School',
+		icon: '/icons/school_icon.png',
+		component: markRaw(defineAsyncComponent(() => import('../components/apps/SchoolApp.vue'))),
+	},
 ];
