@@ -27,7 +27,7 @@
 			<span class="highlight">Turtlebrowse</span>, <span class="highlight">Calculite</span>,
 			and <span class="highlight">Examduler</span>. Find out more in the 'Projects' applet.
 		</p>
-		<p>For now, have fun exploring the operating system I guess. See ya!</p>
+		<p>For now, have fun exploring the operating system I guess. byeee!</p>
 	</div>
 </template>
 

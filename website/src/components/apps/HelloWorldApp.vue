@@ -10,6 +10,7 @@
 		</p>
 		<p>for help type 'help' in the terminal nyaa</p>
 		<p>fedora linux user btw</p>
+		<img src="/fedora.svg" height="50px" />
 	</div>
 </template>
 
